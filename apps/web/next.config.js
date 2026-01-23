@@ -12,6 +12,18 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
       },
       {
+        protocol: 'https',
+        hostname: '*.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'serveo-api-4saq.onrender.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.onrender.com',
+      },
+      {
         protocol: 'http',
         hostname: 'localhost',
       },
