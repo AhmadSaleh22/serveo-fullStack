@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <!-- Serveo Logo - Icon + Wordmark -->
+
+  <!-- Icon: Abstract S with connection/flow motif -->
+  <g id="icon">
+    <!-- Top arc -->
+    <path d="M8 12C8 8 11 5 15 5H25C29 5 32 8 32 12C32 16 29 19 25 19H18"
+          stroke="#1e3a5f" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <!-- Bottom arc -->
+    <path d="M32 38C32 42 29 45 25 45H15C11 45 8 42 8 38C8 34 11 31 15 31H22"
+          stroke="#1e3a5f" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <!-- Connecting flow line -->
+    <path d="M18 19C18 19 22 25 22 31"
+          stroke="#0d9488" stroke-width="4" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Wordmark: serveo -->
+  <g id="wordmark" fill="#1e3a5f">
+    <text x="48" y="35" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+          font-size="28" font-weight="600" letter-spacing="-0.5">serveo</text>
+  </g>
+</svg>

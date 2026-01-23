@@ -1,0 +1,256 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============== ENUMS ==============
+
+enum UserRole {
+  OWNER
+}
+
+enum OrderStatus {
+  NEW
+  CONFIRMED
+  DELIVERING
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentMethod {
+  CASH
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+  BUNDLE
+}
+
+enum OfferTarget {
+  GLOBAL
+  CATEGORY
+  ITEM
+}
+
+enum OrderType {
+  DELIVERY
+  DINE_IN
+}
+
+enum PlanType {
+  BASIC
+  PRO
+  PREMIUM
+}
+
+// ============== MODELS ==============
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String
+  role         UserRole    @default(OWNER)
+  restaurantId String?     @unique
+  restaurant   Restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@map("users")
+}
+
+model Restaurant {
+  id              String    @id @default(uuid())
+  name            String
+  nameAr          String?
+  slug            String    @unique
+  phone           String
+  whatsappEnabled Boolean   @default(true)
+  logoUrl         String?
+  address         String    @default("")
+  addressAr       String?
+  hoursJson       Json      @default("{}")
+  minOrder        Float     @default(0)
+  deliveryFee     Float     @default(0)
+  currency        String    @default("EGP")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // SEO Fields
+  metaTitle         String?
+  metaTitleAr       String?
+  metaDescription   String?
+  metaDescriptionAr String?
+  keywords          String?
+  keywordsAr        String?
+
+  // Feature Flags
+  planType PlanType @default(BASIC)
+
+  // Relations
+  owner      User?
+  categories Category[]
+  items      Item[]
+  orders     Order[]
+  offers     Offer[]
+  tables     Table[]
+
+  @@map("restaurants")
+}
+
+model Category {
+  id           String     @id @default(uuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name         String
+  nameAr       String?
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  items        Item[]
+  offerTargets Offer[]
+
+  @@map("categories")
+}
+
+model Item {
+  id            String     @id @default(uuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name          String
+  nameAr        String?
+  description   String?
+  descriptionAr String?
+  price         Float
+  imageUrl      String?
+  isAvailable   Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  orderItems   OrderItem[]
+  images       ItemImage[]
+  offerTargets Offer[]
+
+  @@map("items")
+}
+
+model ItemImage {
+  id        String   @id @default(uuid())
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  url       String
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([itemId])
+  @@map("item_images")
+}
+
+model Offer {
+  id               String       @id @default(uuid())
+  restaurantId     String
+  restaurant       Restaurant   @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  title            String
+  titleAr          String?
+  description      String?
+  descriptionAr    String?
+  discountType     DiscountType
+  discountValue    Float        // percentage (0-100) or fixed amount
+  bundleConfig     Json?        // for BUNDLE: { buyQty: 2, getQty: 1, itemId?: string }
+  targetType       OfferTarget  @default(GLOBAL)
+  targetCategoryId String?
+  targetCategory   Category?    @relation(fields: [targetCategoryId], references: [id], onDelete: SetNull)
+  targetItemId     String?
+  targetItem       Item?        @relation(fields: [targetItemId], references: [id], onDelete: SetNull)
+  startDate        DateTime
+  endDate          DateTime
+  isActive         Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  orderOffers OrderOffer[]
+
+  @@index([restaurantId, isActive, startDate, endDate])
+  @@map("offers")
+}
+
+model Table {
+  id           String     @id @default(uuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  number       Int
+  name         String?
+  capacity     Int        @default(4)
+  isActive     Boolean    @default(true)
+  qrCodeUrl    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  orders Order[]
+
+  @@unique([restaurantId, number])
+  @@map("tables")
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  restaurantId  String
+  restaurant    Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderNumber   String        @unique
+  customerName  String
+  customerPhone String
+  addressJson   Json
+  notes         String?
+  paymentMethod PaymentMethod @default(CASH)
+  subtotal      Float
+  deliveryFee   Float
+  discountTotal Float         @default(0)
+  total         Float
+  status        OrderStatus   @default(NEW)
+  orderType     OrderType     @default(DELIVERY)
+  tableId       String?
+  table         Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  tableNumber   Int?          // Snapshot for historical reference
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  items         OrderItem[]
+  appliedOffers OrderOffer[]
+
+  @@index([restaurantId, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String  @id @default(uuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  itemId         String?
+  item           Item?   @relation(fields: [itemId], references: [id], onDelete: SetNull)
+  nameSnapshot   String
+  nameSnapshotAr String?
+  priceSnapshot  Float
+  quantity       Int
+
+  @@map("order_items")
+}
+
+model OrderOffer {
+  id             String  @id @default(uuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  offerId        String?
+  offer          Offer?  @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  offerTitle     String  // Snapshot at order time
+  discountAmount Float
+
+  @@map("order_offers")
+}

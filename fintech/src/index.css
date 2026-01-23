@@ -1,0 +1,257 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Dark Theme - Navy Colors (Modern Banking) */
+  --color-navy-950: oklch(0.13 0.028 265);
+  --color-navy-900: oklch(0.18 0.035 265);
+  --color-navy-800: oklch(0.25 0.038 265);
+  --color-navy-700: oklch(0.35 0.035 265);
+  --color-navy-600: oklch(0.45 0.03 265);
+  --color-navy-500: oklch(0.55 0.025 265);
+
+  /* Fonts */
+  --font-sans: 'Inter', 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ===== ROOT VARIABLES ===== */
+:root {
+  /* Dark theme (default) */
+  --bg-primary: oklch(0.18 0.035 265);
+  --bg-secondary: oklch(0.13 0.028 265);
+  --bg-tertiary: oklch(0.25 0.038 265);
+  --bg-hover: oklch(0.30 0.035 265);
+  --border-color: oklch(0.25 0.038 265);
+  --border-light: oklch(0.35 0.035 265);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --scrollbar-track: oklch(0.25 0.038 265);
+  --scrollbar-thumb: oklch(0.45 0.03 265);
+}
+
+:root.light {
+  /* Light theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-hover: #e2e8f0;
+  --border-color: #e2e8f0;
+  --border-light: #cbd5e1;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+}
+
+/* ===== BASE STYLES ===== */
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
+/* ===== THEME UTILITY CLASSES ===== */
+.theme-bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.theme-bg-tertiary {
+  background-color: var(--bg-tertiary);
+}
+
+.theme-bg-hover:hover {
+  background-color: var(--bg-hover);
+}
+
+.theme-border {
+  border-color: var(--border-color);
+}
+
+.theme-border-light {
+  border-color: var(--border-light);
+}
+
+.theme-text-primary {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ===== UTILITIES ===== */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Light theme shimmer adjustment */
+:root.light .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.03) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ===== STREAMING CURSOR ===== */
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.2em;
+  background-color: currentColor;
+  animation: cursor-blink 1s step-end infinite;
+  margin-inline-start: 2px;
+  vertical-align: text-bottom;
+}
+
+/* ===== CELL OVERRIDE STYLES ===== */
+@keyframes recalc-flash {
+  0%, 100% { background-color: transparent; }
+  50% { background-color: rgba(16, 185, 129, 0.3); }
+}
+
+.recalc-flash {
+  animation: recalc-flash 0.6s ease-out;
+}
+
+.cell-overridden {
+  background-color: rgba(245, 158, 11, 0.15);
+  position: relative;
+}
+
+.cell-overridden::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: rgb(245, 158, 11);
+}
+
+/* Light theme override indicator */
+:root.light .cell-overridden {
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+/* ===== SKELETON LOADER ===== */
+.skeleton-cell {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 0%,
+    var(--bg-hover) 50%,
+    var(--bg-tertiary) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* ===== FILTER HIGHLIGHT ===== */
+.filter-highlight {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* ===== DRAG HANDLE ===== */
+.drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* ===== SOURCE CITATION ===== */
+.citation-marker {
+  font-size: 0.65em;
+  vertical-align: super;
+  color: rgb(59, 130, 246);
+  cursor: pointer;
+  font-weight: 600;
+  margin-inline: 1px;
+  transition: color 0.15s;
+}
+
+.citation-marker:hover {
+  color: rgb(37, 99, 235);
+  text-decoration: underline;
+}
