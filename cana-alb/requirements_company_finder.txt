@@ -1,0 +1,4 @@
+# Alberta Company Finder - Dependencies
+# Install with: pip install -r requirements_company_finder.txt
+
+requests>=2.28.0

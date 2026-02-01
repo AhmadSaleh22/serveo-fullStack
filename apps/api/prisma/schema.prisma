@@ -16,6 +16,8 @@ enum UserRole {
 enum OrderStatus {
   NEW
   CONFIRMED
+  PREPARING
+  READY
   DELIVERING
   COMPLETED
   CANCELED
@@ -23,6 +25,19 @@ enum OrderStatus {
 
 enum PaymentMethod {
   CASH
+}
+
+enum PaymentMethodType {
+  CASH_ON_DELIVERY
+  CARD_ON_DELIVERY
+  CARD_ONLINE
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  FAILED
+  REFUNDED
 }
 
 enum DiscountType {
@@ -40,12 +55,19 @@ enum OfferTarget {
 enum OrderType {
   DELIVERY
   DINE_IN
+  PICKUP
 }
 
 enum PlanType {
   BASIC
   PRO
   PREMIUM
+}
+
+enum DeliveryPricingStrategy {
+  ZONES_ONLY
+  DISTANCE_ONLY
+  HYBRID
 }
 
 // ============== MODELS ==============
@@ -98,8 +120,137 @@ model Restaurant {
   orders     Order[]
   offers     Offer[]
   tables     Table[]
+  branches   Branch[]
 
   @@map("restaurants")
+}
+
+// Branch - core multi-location support
+model Branch {
+  id                      String                  @id @default(uuid())
+  restaurantId            String
+  restaurant              Restaurant              @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name                    String
+  nameAr                  String?
+  slug                    String                  // unique within restaurant
+  countryCode             String                  @default("EG")
+  currencyCode            String                  @default("EGP")
+  timezone                String                  @default("Africa/Cairo")
+  address                 String
+  addressAr               String?
+  latitude                Float?
+  longitude               Float?
+  phone                   String
+  isActive                Boolean                 @default(true)
+  orderTypesEnabled       Json                    @default("[\"delivery\", \"pickup\", \"dine_in\"]")
+  minOrderAmount          Int                     @default(0)  // in smallest currency unit (cents/piasters)
+  prepTimeMinutes         Int                     @default(30)
+  hoursJson               Json                    @default("{}")
+  deliveryPricingStrategy DeliveryPricingStrategy @default(HYBRID)
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @updatedAt
+
+  // Relations
+  tables         Table[]
+  orders         Order[]
+  deliveryZones  DeliveryZone[]
+  distanceRules  DeliveryDistanceRule[]
+  paymentMethods PaymentMethodConfig[]
+  menuOverrides  BranchMenuOverride[]
+
+  @@unique([restaurantId, slug])
+  @@index([restaurantId, isActive])
+  @@map("branches")
+}
+
+// Delivery Zone (manual zone-based pricing)
+model DeliveryZone {
+  id               String   @id @default(uuid())
+  branchId         String
+  branch           Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  name             String
+  nameAr           String?
+  polygon          Json?    // GeoJSON polygon coordinates
+  postalCodes      String[] // alternative to polygon
+  deliveryFee      Int      // in smallest currency unit
+  minOrderAmount   Int      @default(0)
+  estimatedMinutes Int      @default(30)
+  isActive         Boolean  @default(true)
+  priority         Int      @default(0) // higher priority checked first
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([branchId, isActive, priority])
+  @@map("delivery_zones")
+}
+
+// Distance-based pricing rules
+model DeliveryDistanceRule {
+  id             String   @id @default(uuid())
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  minDistanceKm  Float
+  maxDistanceKm  Float
+  baseFee        Int      // in smallest currency unit
+  perKmFee       Int      // additional fee per km
+  minOrderAmount Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([branchId, isActive])
+  @@map("delivery_distance_rules")
+}
+
+// Payment method configuration per branch
+model PaymentMethodConfig {
+  id            String            @id @default(uuid())
+  branchId      String
+  branch        Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  methodType    PaymentMethodType
+  isEnabled     Boolean           @default(true)
+  displayOrder  Int               @default(0)
+  availableFor  Json              @default("[\"delivery\", \"pickup\", \"dine_in\"]") // order types
+  minOrderAmount Int?
+  maxOrderAmount Int?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([branchId, methodType])
+  @@index([branchId, isEnabled])
+  @@map("payment_method_configs")
+}
+
+// Branch-specific menu overrides (prices, availability)
+model BranchMenuOverride {
+  id            String   @id @default(uuid())
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  itemId        String
+  item          Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  priceOverride Int?     // null = use base price, in smallest currency unit
+  isAvailable   Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([branchId, itemId])
+  @@map("branch_menu_overrides")
+}
+
+// Country/Currency configuration
+model CountryConfig {
+  countryCode       String @id
+  countryName       String
+  currencyCode      String
+  currencySymbol    String
+  symbolPosition    String @default("after") // "before" or "after"
+  decimalPlaces     Int    @default(2)
+  smallestUnit      Int    @default(100) // e.g., 100 cents = 1 dollar
+  roundingRule      String @default("nearest_1")
+  thousandSeparator String @default(",")
+  decimalSeparator  String @default(".")
+
+  @@map("country_configs")
 }
 
 model Category {
@@ -119,24 +270,27 @@ model Category {
 }
 
 model Item {
-  id            String     @id @default(uuid())
-  restaurantId  String
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  categoryId    String
-  category      Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  name          String
-  nameAr        String?
-  description   String?
-  descriptionAr String?
-  price         Float
-  imageUrl      String?
-  isAvailable   Boolean    @default(true)
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id             String     @id @default(uuid())
+  restaurantId   String
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId     String
+  category       Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name           String
+  nameAr         String?
+  description    String?
+  descriptionAr  String?
+  price          Float      // Legacy: keeping for backward compatibility
+  basePriceCents Int?       // New: price in smallest currency unit
+  baseCurrency   String     @default("EGP")
+  imageUrl       String?
+  isAvailable    Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
-  orderItems   OrderItem[]
-  images       ItemImage[]
-  offerTargets Offer[]
+  orderItems      OrderItem[]
+  images          ItemImage[]
+  offerTargets    Offer[]
+  branchOverrides BranchMenuOverride[]
 
   @@map("items")
 }
@@ -186,46 +340,62 @@ model Table {
   id           String     @id @default(uuid())
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  branchId     String?    // Optional for backward compatibility, will be migrated
+  branch       Branch?    @relation(fields: [branchId], references: [id], onDelete: Cascade)
   number       Int
   name         String?
   capacity     Int        @default(4)
   isActive     Boolean    @default(true)
   qrCodeUrl    String?
+  qrToken      String?    @unique @default(uuid()) // Secure token for QR URLs
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   orders Order[]
 
   @@unique([restaurantId, number])
+  @@index([branchId, isActive])
   @@map("tables")
 }
 
 model Order {
-  id            String        @id @default(uuid())
-  restaurantId  String
-  restaurant    Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  orderNumber   String        @unique
-  customerName  String
-  customerPhone String
-  addressJson   Json
-  notes         String?
-  paymentMethod PaymentMethod @default(CASH)
-  subtotal      Float
-  deliveryFee   Float
-  discountTotal Float         @default(0)
-  total         Float
-  status        OrderStatus   @default(NEW)
-  orderType     OrderType     @default(DELIVERY)
-  tableId       String?
-  table         Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
-  tableNumber   Int?          // Snapshot for historical reference
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                     String        @id @default(uuid())
+  restaurantId           String
+  restaurant             Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  branchId               String?       // Optional for backward compatibility
+  branch                 Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  orderNumber            String        @unique
+  customerName           String
+  customerPhone          String
+  addressJson            Json
+  deliveryLatitude       Float?        // Customer delivery location
+  deliveryLongitude      Float?
+  notes                  String?
+  paymentMethod          PaymentMethod @default(CASH)
+  paymentMethodType      PaymentMethodType? // New detailed payment type
+  paymentStatus          PaymentStatus @default(UNPAID)
+  paymentReference       String?       // External payment reference
+  currencyCode           String        @default("EGP")
+  subtotal               Float
+  deliveryFee            Float
+  deliveryFeeCalculation Json?         // Audit snapshot of how delivery fee was calculated
+  discountTotal          Float         @default(0)
+  total                  Float
+  pricingSnapshot        Json?         // Snapshot of item prices at order time
+  status                 OrderStatus   @default(NEW)
+  orderType              OrderType     @default(DELIVERY)
+  tableId                String?
+  table                  Table?        @relation(fields: [tableId], references: [id], onDelete: SetNull)
+  tableNumber            Int?          // Snapshot for historical reference
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
 
   items         OrderItem[]
   appliedOffers OrderOffer[]
 
   @@index([restaurantId, createdAt])
+  @@index([branchId, createdAt])
+  @@index([paymentStatus])
   @@map("orders")
 }
 
@@ -238,7 +408,8 @@ model OrderItem {
   nameSnapshot   String
   nameSnapshotAr String?
   priceSnapshot  Float
-  quantity       Int
+
+  quantity Int
 
   @@map("order_items")
 }
