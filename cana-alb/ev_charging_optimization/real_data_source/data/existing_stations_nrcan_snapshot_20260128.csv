@@ -1,0 +1,19 @@
+station_id,name,lat,lon,power_kw,source
+0,Regina Downtown FLO,50.4452,-104.6189,50,NRCan_manual_extraction_20260128
+1,Regina Airport ChargeHub,50.435,-104.6667,150,NRCan_manual_extraction_20260128
+2,Saskatoon Downtown FLO,52.1332,-106.67,50,NRCan_manual_extraction_20260128
+3,Saskatoon Airport Tesla,52.17,-106.72,250,NRCan_manual_extraction_20260128
+4,Moose Jaw FLO,50.4,-105.55,50,NRCan_manual_extraction_20260128
+5,Prince Albert FLO,53.2,-105.75,50,NRCan_manual_extraction_20260128
+6,Yorkton ChargeHub,51.2167,-102.4667,50,NRCan_manual_extraction_20260128
+7,Swift Current FLO,50.2833,-107.8,50,NRCan_manual_extraction_20260128
+8,North Battleford FLO,52.7833,-108.3,50,NRCan_manual_extraction_20260128
+9,Weyburn FLO,49.6667,-103.85,50,NRCan_manual_extraction_20260128
+10,Estevan FLO,49.1333,-103.0,50,NRCan_manual_extraction_20260128
+11,Lloydminster FLO,53.2833,-110.0,50,NRCan_manual_extraction_20260128
+12,Melfort FLO,52.8667,-104.6,50,NRCan_manual_extraction_20260128
+13,Humboldt FLO,52.2,-105.1167,50,NRCan_manual_extraction_20260128
+14,Watrous FLO,51.6833,-105.45,50,NRCan_manual_extraction_20260128
+15,Kindersley FLO,51.4667,-109.1667,50,NRCan_manual_extraction_20260128
+16,Rosetown FLO,51.5167,-107.9833,50,NRCan_manual_extraction_20260128
+17,Maple Creek FLO,49.9167,-109.45,50,NRCan_manual_extraction_20260128

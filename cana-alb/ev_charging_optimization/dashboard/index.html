@@ -380,10 +380,28 @@
             </div>
         </div>
 
-        <!-- Map (Full Width for Saskatchewan) -->
+        <!-- Real Training Maps -->
+        <div class="charts-grid" id="real-maps-section" style="display: none;">
+            <div class="chart-container">
+                <h3>Real Data Map (2021 Census + NRCan)</h3>
+                <img id="real-data-map" src="/api/real-map" alt="Saskatchewan Data Map" 
+                     style="width: 100%; border-radius: 8px; cursor: pointer;"
+                     onclick="window.open('/api/real-map', '_blank')"
+                     onerror="this.parentElement.style.display='none'">
+            </div>
+            <div class="chart-container">
+                <h3>RL Training Results</h3>
+                <img id="results-map" src="/api/results-map" alt="RL Results Map" 
+                     style="width: 100%; border-radius: 8px; cursor: pointer;"
+                     onclick="window.open('/api/results-map', '_blank')"
+                     onerror="this.parentElement.style.display='none'">
+            </div>
+        </div>
+
+        <!-- Interactive Map (Full Width for Saskatchewan) -->
         <div class="charts-grid">
             <div class="map-container full-width">
-                <h3>Station Network Map</h3>
+                <h3>Interactive Station Network Map</h3>
                 <div id="map"></div>
             </div>
         </div>
@@ -486,6 +504,13 @@
                     }));
                 
                 console.log('Real data loaded:', saskData);
+                
+                // Show real maps section
+                document.getElementById('real-maps-section').style.display = 'grid';
+                
+                // Refresh the map images with cache busting
+                document.getElementById('real-data-map').src = '/api/real-map?' + Date.now();
+                document.getElementById('results-map').src = '/api/results-map?' + Date.now();
                 
                 // Refresh UI
                 updateMetrics();

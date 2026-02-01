@@ -639,6 +639,62 @@ dashboard_path = Path(__file__).parent.parent.parent / "dashboard"
 if dashboard_path.exists():
     app.mount("/dashboard", StaticFiles(directory=str(dashboard_path), html=True), name="dashboard")
 
+# Serve real_data_source output images
+real_data_output = Path(__file__).parent.parent.parent / "real_data_source" / "output"
+real_data_root = Path(__file__).parent.parent.parent / "real_data_source"
+
+
+@app.get("/api/real-map")
+async def get_real_map():
+    """Get the real Saskatchewan data map from training output."""
+    map_path = real_data_output / "saskatchewan_data_map.png"
+    if map_path.exists():
+        return FileResponse(map_path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Map not generated yet. Run training first.")
+
+
+@app.get("/api/results-map")
+async def get_results_map():
+    """Get the final results map from RL training."""
+    map_path = real_data_root / "final_results_map.png"
+    if map_path.exists():
+        return FileResponse(map_path, media_type="image/png")
+    raise HTTPException(status_code=404, detail="Results map not generated yet. Run training first.")
+
+
+@app.get("/api/real-stations")
+async def get_real_stations():
+    """Get real station data from the data_loader output."""
+    import geopandas as gpd
+    
+    # Load from data_loader generated CSV
+    csv_path = real_data_root / "data" / "existing_stations_nrcan_snapshot_20260128.csv"
+    if csv_path.exists():
+        import pandas as pd
+        df = pd.read_csv(csv_path)
+        return {
+            "status": "ok",
+            "source": "NRCan January 28, 2026",
+            "count": len(df),
+            "stations": df.to_dict(orient="records")
+        }
+    
+    # Fallback to geojson
+    geojson_path = real_data_root / "data" / "existing_stations.geojson"
+    if geojson_path.exists():
+        gdf = gpd.read_file(geojson_path)
+        return {
+            "status": "ok",
+            "source": "GeoJSON",
+            "count": len(gdf),
+            "stations": [
+                {"lat": row.geometry.y, "lon": row.geometry.x}
+                for _, row in gdf.iterrows()
+            ]
+        }
+    
+    raise HTTPException(status_code=404, detail="No station data found")
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -69,9 +69,14 @@ def calculate_coverage(station_lats, station_lons):
             covered += pop['population'].iloc[i]
     return (covered / pop['population'].sum()) * 100
 
+# Get existing station coordinates
+existing_coords = env.envs[0].existing_coords
+existing_lats = [c[0] for c in existing_coords]
+existing_lons = [c[1] for c in existing_coords]
+
 rl_coverage = calculate_coverage(
-    np.append(env.envs[0].existing_lats, [s[0] for s in stations]),
-    np.append(env.envs[0].existing_lons, [s[1] for s in stations])
+    np.append(existing_lats, [s[0] for s in stations]),
+    np.append(existing_lons, [s[1] for s in stations])
 )
 
 print("\n✅ TRAINING COMPLETE!")

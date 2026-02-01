@@ -1,0 +1,25 @@
+{
+"type": "FeatureCollection",
+"name": "existing_stations",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "station_id": 0, "name": "Regina Downtown FLO", "lat": 50.4452, "lon": -104.6189, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -104.6189, 50.4452 ] } },
+{ "type": "Feature", "properties": { "station_id": 1, "name": "Regina Airport ChargeHub", "lat": 50.435, "lon": -104.6667, "power_kw": 150, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -104.6667, 50.435 ] } },
+{ "type": "Feature", "properties": { "station_id": 2, "name": "Saskatoon Downtown FLO", "lat": 52.1332, "lon": -106.67, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -106.67, 52.1332 ] } },
+{ "type": "Feature", "properties": { "station_id": 3, "name": "Saskatoon Airport Tesla", "lat": 52.17, "lon": -106.72, "power_kw": 250, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -106.72, 52.17 ] } },
+{ "type": "Feature", "properties": { "station_id": 4, "name": "Moose Jaw FLO", "lat": 50.4, "lon": -105.55, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -105.55, 50.4 ] } },
+{ "type": "Feature", "properties": { "station_id": 5, "name": "Prince Albert FLO", "lat": 53.2, "lon": -105.75, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -105.75, 53.2 ] } },
+{ "type": "Feature", "properties": { "station_id": 6, "name": "Yorkton ChargeHub", "lat": 51.2167, "lon": -102.4667, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -102.4667, 51.2167 ] } },
+{ "type": "Feature", "properties": { "station_id": 7, "name": "Swift Current FLO", "lat": 50.2833, "lon": -107.8, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -107.8, 50.2833 ] } },
+{ "type": "Feature", "properties": { "station_id": 8, "name": "North Battleford FLO", "lat": 52.7833, "lon": -108.3, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -108.3, 52.7833 ] } },
+{ "type": "Feature", "properties": { "station_id": 9, "name": "Weyburn FLO", "lat": 49.6667, "lon": -103.85, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -103.85, 49.6667 ] } },
+{ "type": "Feature", "properties": { "station_id": 10, "name": "Estevan FLO", "lat": 49.1333, "lon": -103.0, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -103.0, 49.1333 ] } },
+{ "type": "Feature", "properties": { "station_id": 11, "name": "Lloydminster FLO", "lat": 53.2833, "lon": -110.0, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -110.0, 53.2833 ] } },
+{ "type": "Feature", "properties": { "station_id": 12, "name": "Melfort FLO", "lat": 52.8667, "lon": -104.6, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -104.6, 52.8667 ] } },
+{ "type": "Feature", "properties": { "station_id": 13, "name": "Humboldt FLO", "lat": 52.2, "lon": -105.1167, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -105.1167, 52.2 ] } },
+{ "type": "Feature", "properties": { "station_id": 14, "name": "Watrous FLO", "lat": 51.6833, "lon": -105.45, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -105.45, 51.6833 ] } },
+{ "type": "Feature", "properties": { "station_id": 15, "name": "Kindersley FLO", "lat": 51.4667, "lon": -109.1667, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -109.1667, 51.4667 ] } },
+{ "type": "Feature", "properties": { "station_id": 16, "name": "Rosetown FLO", "lat": 51.5167, "lon": -107.9833, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -107.9833, 51.5167 ] } },
+{ "type": "Feature", "properties": { "station_id": 17, "name": "Maple Creek FLO", "lat": 49.9167, "lon": -109.45, "power_kw": 50, "source": "NRCan_manual_extraction_20260128" }, "geometry": { "type": "Point", "coordinates": [ -109.45, 49.9167 ] } }
+]
+}
