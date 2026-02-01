@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-02-01T05:52:06.618487",
+  "data_source": "main22 (2021 Census + NRCan)",
+  "population": 614165,
+  "baseline": {
+    "stations": 15,
+    "coverage": {
+      "covered_population": 595194,
+      "coverage_percent": 96.91109066781728,
+      "covered_centers": 18,
+      "total_centers": 20,
+      "max_distance_km": 650.1540669993982
+    },
+    "simulation": {
+      "total_served": 13218,
+      "avg_wait_time": 5120.83897309328,
+      "p95_wait_time": 8776.801108857095,
+      "avg_utilization": 1.1596144237484594,
+      "total_balked": 2
+    }
+  },
+  "optimized": {
+    "stations": 17,
+    "new_stations": 2,
+    "coverage": {
+      "covered_population": 614165,
+      "coverage_percent": 100.0,
+      "covered_centers": 20,
+      "total_centers": 20,
+      "max_distance_km": 130.51071971945362
+    },
+    "simulation": {
+      "total_served": 14991,
+      "avg_wait_time": 4994.9810118509995,
+      "p95_wait_time": 8697.89739130956,
+      "avg_utilization": 1.159097681092741,
+      "total_balked": 0
+    },
+    "new_station_details": [
+      {
+        "name": "New Station 1 (Town_14)",
+        "lat": 58.84310085470413,
+        "lng": -104.61890019070023,
+        "chargers": 4
+      },
+      {
+        "name": "New Station 2 (Town_3)",
+        "lat": 56.7887983557565,
+        "lng": -109.81473955133778,
+        "chargers": 4
+      }
+    ]
+  }
+}

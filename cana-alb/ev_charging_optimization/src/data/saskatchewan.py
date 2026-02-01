@@ -14,8 +14,10 @@ from ..simulation.engine import ZoneConfig
 from ..simulation.station import Station, create_station
 
 
-# Default data directory relative to this file
-DEFAULT_DATA_DIR = Path(__file__).parent.parent.parent / "mainproject"
+# Default data directory - use real_data_source (from main22) as primary
+DEFAULT_DATA_DIR = Path(__file__).parent.parent.parent / "real_data_source"
+# Fallback to mainproject if real_data_source doesn't exist
+FALLBACK_DATA_DIR = Path(__file__).parent.parent.parent / "mainproject"
 
 # Saskatchewan geographic bounds
 SASKATCHEWAN_BOUNDS = {
@@ -216,14 +218,30 @@ def load_saskatchewan_data(data_dir: Optional[Path] = None) -> SaskatchewanData:
     """
     Load all Saskatchewan data from GeoJSON files.
     
+    Uses real_data_source (from main22) as primary data source,
+    falls back to mainproject/ if not available.
+    
     Args:
         data_dir: Directory containing GeoJSON files
-                  (defaults to mainproject/)
+                  (defaults to real_data_source/ then mainproject/)
                   
     Returns:
         SaskatchewanData container with all loaded data
     """
-    data_dir = data_dir or DEFAULT_DATA_DIR
+    # Determine data directory
+    if data_dir is None:
+        if DEFAULT_DATA_DIR.exists():
+            data_dir = DEFAULT_DATA_DIR
+            print(f"  Using real data source: {data_dir}")
+        elif FALLBACK_DATA_DIR.exists():
+            data_dir = FALLBACK_DATA_DIR
+            print(f"  Using fallback data source: {data_dir}")
+        else:
+            raise FileNotFoundError(
+                f"No data directory found. Expected: {DEFAULT_DATA_DIR} or {FALLBACK_DATA_DIR}"
+            )
+    else:
+        data_dir = Path(data_dir)
 
     population_file = data_dir / "saskatchewan_population.geojson"
     stations_file = data_dir / "existing_stations.geojson"
