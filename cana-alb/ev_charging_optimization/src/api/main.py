@@ -667,7 +667,7 @@ async def get_real_stations():
     """Get real station data from the data_loader output."""
     import geopandas as gpd
     
-    # Load from data_loader generated CSV
+    # Load from data_loader generated CSV (18 NRCan stations)
     csv_path = real_data_root / "data" / "existing_stations_nrcan_snapshot_20260128.csv"
     if csv_path.exists():
         import pandas as pd
@@ -694,6 +694,81 @@ async def get_real_stations():
         }
     
     raise HTTPException(status_code=404, detail="No station data found")
+
+
+@app.get("/api/training-data")
+async def get_training_data():
+    """
+    Get the EXACT same data used by env.py / data_loader.py for training.
+    Returns 18 NRCan stations + 32 population points.
+    """
+    import sys
+    import os
+    import geopandas as gpd
+    
+    # Add real_data_source to path to import data_loader
+    real_data_path = str(real_data_root)
+    if real_data_path not in sys.path:
+        sys.path.insert(0, real_data_path)
+    
+    # Change to real_data_source directory so data_loader finds its files
+    original_cwd = os.getcwd()
+    os.chdir(real_data_path)
+    
+    try:
+        # Reload the module to pick up the correct path
+        if 'data_loader' in sys.modules:
+            del sys.modules['data_loader']
+        from data_loader import load_saskatchewan_data as load_training_data
+        
+        pop, roads, stations = load_training_data(use_cached_only=True)
+        
+        # Format for dashboard
+        existing_stations = []
+        for idx, row in stations.iterrows():
+            existing_stations.append({
+                "name": f"NRCan Station {idx + 1}",
+                "lat": float(row.geometry.y),
+                "lng": float(row.geometry.x),
+                "chargers": 4,
+                "type": "existing",
+                "utilization": 0.7
+            })
+        
+        population_centers = []
+        for idx, row in pop.iterrows():
+            population_centers.append({
+                "name": row.get("name", f"Location {idx + 1}"),
+                "lat": float(row.geometry.y),
+                "lng": float(row.geometry.x),
+                "population": int(row["population"]) if "population" in row else 0
+            })
+        
+        road_segments = []
+        for idx, row in roads.iterrows():
+            coords = list(row.geometry.coords)
+            road_segments.append({
+                "name": row.get("name", f"Highway {idx + 1}"),
+                "coordinates": [[c[1], c[0]] for c in coords]  # [lat, lng] for Leaflet
+            })
+        
+        return {
+            "status": "ok",
+            "source": "data_loader.py (same as env.py training)",
+            "existing_stations": existing_stations,
+            "population_centers": population_centers,
+            "road_segments": road_segments,
+            "summary": {
+                "total_stations": len(existing_stations),
+                "total_population_points": len(population_centers),
+                "total_roads": len(road_segments)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load training data: {str(e)}")
+    finally:
+        # Restore original working directory
+        os.chdir(original_cwd)
 
 
 if __name__ == "__main__":

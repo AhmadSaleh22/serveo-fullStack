@@ -465,45 +465,56 @@
             rlStations: []
         };
 
-        // Load real data from API
+        // Load real data from API (same data as env.py / data_loader.py)
         async function loadRealData() {
             try {
-                const response = await fetch('/api/run-optimization');
-                if (!response.ok) throw new Error('API error');
-                const data = await response.json();
+                document.getElementById('status-badge').textContent = 'Loading...';
+                document.getElementById('status-badge').style.background = '#ecc94b';
                 
-                // Update saskData with real data
-                saskData.baseline.stations = data.baseline.stations;
-                saskData.baseline.coverage = data.baseline.coverage_percent;
-                saskData.baseline.maxDistance = data.baseline.max_distance_km;
+                // Load training data (18 NRCan stations + 32 population points)
+                const trainingResponse = await fetch('/api/training-data');
+                if (!trainingResponse.ok) throw new Error('Training data API error');
+                const trainingData = await trainingResponse.json();
                 
-                saskData.optimized.stations = data.optimized.stations;
-                saskData.optimized.coverage = data.optimized.coverage_percent;
-                saskData.optimized.maxDistance = data.optimized.max_distance_km;
-                saskData.optimized.newStations = data.optimized.new_stations;
+                console.log('Training data loaded:', trainingData);
                 
-                // Update station lists
-                saskData.existingStations = data.baseline.stations_list.map(s => ({
-                    name: s.name,
-                    lat: s.lat,
-                    lng: s.lng,
-                    chargers: s.chargers,
-                    type: 'existing',
-                    utilization: 0.7
-                }));
+                // Update saskData with REAL training data
+                saskData.existingStations = trainingData.existing_stations;
+                saskData.baseline.stations = trainingData.summary.total_stations;
                 
-                saskData.rlStations = data.optimized.stations_list
-                    .filter(s => s.type === 'new')
-                    .map(s => ({
-                        name: s.name,
-                        lat: s.lat,
-                        lng: s.lng,
-                        chargers: s.chargers,
-                        type: 'rl',
-                        utilization: 0.5
-                    }));
+                // Load optimization results for metrics
+                try {
+                    const optResponse = await fetch('/api/run-optimization');
+                    if (optResponse.ok) {
+                        const optData = await optResponse.json();
+                        saskData.baseline.coverage = optData.baseline.coverage_percent;
+                        saskData.baseline.maxDistance = optData.baseline.max_distance_km;
+                        saskData.optimized.stations = optData.optimized.stations;
+                        saskData.optimized.coverage = optData.optimized.coverage_percent;
+                        saskData.optimized.maxDistance = optData.optimized.max_distance_km;
+                        saskData.optimized.newStations = optData.optimized.new_stations;
+                        
+                        // Get RL stations from optimization
+                        saskData.rlStations = optData.optimized.stations_list
+                            .filter(s => s.type === 'new')
+                            .map(s => ({
+                                name: s.name,
+                                lat: s.lat,
+                                lng: s.lng,
+                                chargers: s.chargers,
+                                type: 'rl',
+                                utilization: 0.5
+                            }));
+                    }
+                } catch (e) {
+                    console.log('Optimization API not available, using training data only');
+                }
                 
-                console.log('Real data loaded:', saskData);
+                // Store road segments for map
+                saskData.roads = trainingData.road_segments;
+                saskData.populationCenters = trainingData.population_centers;
+                
+                console.log('Saskatchewan data updated:', saskData);
                 
                 // Show real maps section
                 document.getElementById('real-maps-section').style.display = 'grid';
@@ -518,7 +529,7 @@
                 initCharts();
                 populateTable();
                 
-                document.getElementById('status-badge').textContent = 'Real Data Loaded';
+                document.getElementById('status-badge').textContent = `Real Data (${trainingData.summary.total_stations} stations)`;
                 document.getElementById('status-badge').style.background = '#38a169';
                 
             } catch (error) {
@@ -568,7 +579,7 @@
         // Initialize map
         function initMap() {
             const data = getCurrentData();
-            const center = currentScenario === 'saskatchewan' ? [53.5, -106.0] : [51.045, -114.07];
+            const center = currentScenario === 'saskatchewan' ? [51.5, -106.0] : [51.045, -114.07];
             const zoom = currentScenario === 'saskatchewan' ? 5 : 12;
 
             if (map) {
@@ -581,8 +592,37 @@
                 attribution: '© OpenStreetMap contributors'
             }).addTo(map);
 
-            // Add existing station markers (red triangles)
-            data.existingStations.forEach(station => {
+            // Add roads (gray lines) - same as Real Data Map
+            if (data.roads && data.roads.length > 0) {
+                data.roads.forEach(road => {
+                    L.polyline(road.coordinates, {
+                        color: '#666',
+                        weight: 3,
+                        opacity: 0.7
+                    }).addTo(map).bindPopup(`<strong>${road.name}</strong><br>Primary Road (OSM)`);
+                });
+            }
+
+            // Add population centers (blue circles) - same as Real Data Map
+            if (data.populationCenters && data.populationCenters.length > 0) {
+                data.populationCenters.forEach(pop => {
+                    const size = Math.max(4, Math.min(15, pop.population / 20000));
+                    L.circleMarker([pop.lat, pop.lng], {
+                        radius: size,
+                        fillColor: '#3182ce',
+                        color: '#2c5282',
+                        weight: 1,
+                        opacity: 0.8,
+                        fillOpacity: 0.5
+                    }).addTo(map).bindPopup(`
+                        <strong>${pop.name}</strong><br>
+                        Population: ${pop.population.toLocaleString()}
+                    `);
+                });
+            }
+
+            // Add existing station markers (red triangles) - 18 NRCan stations
+            data.existingStations.forEach((station, idx) => {
                 const marker = L.circleMarker([station.lat, station.lng], {
                     radius: 10,
                     fillColor: '#e53e3e',
@@ -593,31 +633,33 @@
                 }).addTo(map);
 
                 marker.bindPopup(`
-                    <strong>${station.name}</strong><br>
-                    <span style="color: #e53e3e;">Existing Station</span><br>
-                    Chargers: ${station.chargers}<br>
-                    Utilization: ${(station.utilization * 100).toFixed(0)}%
+                    <strong>${station.name || 'NRCan Station ' + (idx + 1)}</strong><br>
+                    <span style="color: #e53e3e;">Existing Station (NRCan)</span><br>
+                    Chargers: ${station.chargers || 4}<br>
+                    Lat: ${station.lat.toFixed(4)}, Lng: ${station.lng.toFixed(4)}
                 `);
             });
 
             // Add RL station markers (green stars)
-            data.rlStations.forEach(station => {
-                const marker = L.circleMarker([station.lat, station.lng], {
-                    radius: 12,
-                    fillColor: '#38a169',
-                    color: '#9f7aea',
-                    weight: 3,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map);
+            if (data.rlStations && data.rlStations.length > 0) {
+                data.rlStations.forEach(station => {
+                    const marker = L.circleMarker([station.lat, station.lng], {
+                        radius: 14,
+                        fillColor: '#38a169',
+                        color: '#ffd700',
+                        weight: 3,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).addTo(map);
 
-                marker.bindPopup(`
-                    <strong>${station.name}</strong><br>
-                    <span style="color: #9f7aea;">RL-Optimized Station</span><br>
-                    Chargers: ${station.chargers}<br>
-                    Est. Utilization: ${(station.utilization * 100).toFixed(0)}%
-                `);
-            });
+                    marker.bindPopup(`
+                        <strong>${station.name}</strong><br>
+                        <span style="color: #38a169;">RL-Proposed Station</span><br>
+                        Chargers: ${station.chargers}<br>
+                        Lat: ${station.lat.toFixed(4)}, Lng: ${station.lng.toFixed(4)}
+                    `);
+                });
+            }
 
             // Add legend
             const legend = L.control({ position: 'bottomright' });
@@ -625,12 +667,20 @@
                 const div = L.DomUtil.create('div', 'legend');
                 div.innerHTML = `
                     <div class="legend-item">
-                        <div class="legend-dot" style="background: #e53e3e;"></div>
-                        <span>Existing Stations</span>
+                        <div class="legend-dot" style="background: #666;"></div>
+                        <span>Primary Roads (OSM)</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-dot" style="background: #38a169; border: 2px solid #9f7aea;"></div>
-                        <span>RL-Optimized (New)</span>
+                        <div class="legend-dot" style="background: #3182ce;"></div>
+                        <span>Population Centers</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #e53e3e;"></div>
+                        <span>Existing Stations (${data.existingStations.length})</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #38a169; border: 2px solid #ffd700;"></div>
+                        <span>RL-Proposed (${data.rlStations ? data.rlStations.length : 0})</span>
                     </div>
                 `;
                 return div;
