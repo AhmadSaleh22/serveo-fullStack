@@ -23,6 +23,7 @@ from ..simulation.station import create_station
 from ..optimization.optimizer import (
     Optimizer, OptimizationConfig, CandidateLocation
 )
+from ..data.saskatchewan import load_saskatchewan_data, haversine_distance
 
 # Create FastAPI app
 app = FastAPI(
@@ -119,6 +120,198 @@ class QueueAnalysisRequest(BaseModel):
 async def root():
     """API health check."""
     return {"status": "ok", "service": "EV Charging Optimization API"}
+
+
+@app.get("/api/real-data")
+async def get_real_data():
+    """
+    Get real Saskatchewan data from main22 repository.
+    Returns population centers, existing stations, and optimization results.
+    """
+    try:
+        # Load real data
+        data = load_saskatchewan_data()
+        
+        # Load optimization results if available
+        results_file = DATA_DIR / "output" / "optimization_results.json"
+        optimization_results = None
+        if results_file.exists():
+            with open(results_file) as f:
+                optimization_results = json.load(f)
+        
+        # Calculate coverage for existing stations
+        existing_coverage = 0
+        coverage_radius = 150.0
+        for pop in data.population_centers:
+            for station in data.existing_stations:
+                dist = haversine_distance(pop.lat, pop.lon, station.lat, station.lon)
+                if dist <= coverage_radius:
+                    existing_coverage += pop.population
+                    break
+        
+        return {
+            "status": "ok",
+            "data_source": "main22 (2021 Census + NRCan)",
+            "population": {
+                "total": data.total_population,
+                "centers": [
+                    {
+                        "city": p.city,
+                        "lat": p.lat,
+                        "lon": p.lon,
+                        "population": p.population
+                    }
+                    for p in data.population_centers
+                ]
+            },
+            "existing_stations": [
+                {
+                    "station_id": s.station_id,
+                    "lat": s.lat,
+                    "lon": s.lon
+                }
+                for s in data.existing_stations
+            ],
+            "baseline_coverage_percent": round(existing_coverage / data.total_population * 100, 1),
+            "optimization_results": optimization_results
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/run-optimization")
+async def run_real_optimization():
+    """
+    Run optimization on real Saskatchewan data and return results.
+    """
+    try:
+        # Load real data
+        data = load_saskatchewan_data()
+        
+        # Create zones from population
+        zones = []
+        for pop in data.population_centers:
+            ev_count = pop.population * 0.15
+            daily_charges = ev_count / 3
+            base_rate = max(0.5, daily_charges / 24)
+            
+            zones.append(ZoneConfig(
+                zone_id=pop.city.lower().replace(" ", "_"),
+                name=pop.city,
+                base_arrival_rate=base_rate,
+                lat=pop.lat,
+                lng=pop.lon
+            ))
+        
+        # Create baseline stations
+        baseline_stations = []
+        for i, existing in enumerate(data.existing_stations):
+            nearest = min(
+                data.population_centers,
+                key=lambda p: haversine_distance(existing.lat, existing.lon, p.lat, p.lon)
+            )
+            station = create_station(
+                station_id=f"existing_{i+1}",
+                name=f"Station {i+1} ({nearest.city})",
+                lat=existing.lat,
+                lng=existing.lon,
+                zone_id=f"zone_{i+1}",
+                num_chargers=4,
+                charger_type="dcfc_50",
+                service_rate=1.33
+            )
+            baseline_stations.append(station)
+        
+        # Find optimal new locations
+        new_stations = []
+        all_stations = list(baseline_stations)
+        coverage_radius = 150.0
+        
+        for i in range(10):
+            best_location = None
+            best_score = -float('inf')
+            
+            for pop in data.population_centers:
+                min_dist = min(
+                    haversine_distance(pop.lat, pop.lon, s.lat, s.lng)
+                    for s in all_stations
+                )
+                
+                if min_dist <= coverage_radius:
+                    continue
+                
+                score = pop.population * 0.001 + min_dist * 0.1
+                if min_dist > 200:
+                    score += 50
+                
+                if score > best_score:
+                    best_score = score
+                    best_location = pop
+            
+            if best_location:
+                station = create_station(
+                    station_id=f"new_{i+1}",
+                    name=f"New Station ({best_location.city})",
+                    lat=best_location.lat,
+                    lng=best_location.lon,
+                    zone_id=f"new_zone_{i+1}",
+                    num_chargers=4,
+                    charger_type="dcfc_50",
+                    service_rate=1.33
+                )
+                new_stations.append(station)
+                all_stations.append(station)
+        
+        # Calculate coverages
+        def calc_coverage(stations):
+            covered = 0
+            max_dist = 0
+            for pop in data.population_centers:
+                min_dist = min(
+                    haversine_distance(pop.lat, pop.lon, s.lat, s.lng)
+                    for s in stations
+                )
+                max_dist = max(max_dist, min_dist)
+                if min_dist <= coverage_radius:
+                    covered += pop.population
+            return covered / data.total_population * 100, max_dist
+        
+        baseline_cov, baseline_dist = calc_coverage(baseline_stations)
+        optimized_cov, optimized_dist = calc_coverage(all_stations)
+        
+        return {
+            "status": "ok",
+            "baseline": {
+                "stations": len(baseline_stations),
+                "chargers": len(baseline_stations) * 4,
+                "coverage_percent": round(baseline_cov, 1),
+                "max_distance_km": round(baseline_dist, 0),
+                "stations_list": [
+                    {"name": s.name, "lat": s.lat, "lng": s.lng, "chargers": s.num_chargers, "type": "existing"}
+                    for s in baseline_stations
+                ]
+            },
+            "optimized": {
+                "stations": len(all_stations),
+                "chargers": len(all_stations) * 4,
+                "new_stations": len(new_stations),
+                "coverage_percent": round(optimized_cov, 1),
+                "max_distance_km": round(optimized_dist, 0),
+                "stations_list": [
+                    {"name": s.name, "lat": s.lat, "lng": s.lng, "chargers": s.num_chargers, "type": "existing"}
+                    for s in baseline_stations
+                ] + [
+                    {"name": s.name, "lat": s.lat, "lng": s.lng, "chargers": s.num_chargers, "type": "new"}
+                    for s in new_stations
+                ]
+            },
+            "improvement": {
+                "coverage_increase": round(optimized_cov - baseline_cov, 1),
+                "distance_reduction": round(baseline_dist - optimized_dist, 0)
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/queue-analysis")

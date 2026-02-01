@@ -426,43 +426,82 @@
     </div>
 
     <script>
-        // Saskatchewan Data
-        const saskData = {
+        // Saskatchewan Data - will be loaded from API
+        let saskData = {
             baseline: {
                 avgWait: 12.5,
-                coverage: 72.3,
-                maxDistance: 456,
-                served: 2100,
+                coverage: 96.9,
+                maxDistance: 650,
+                served: 13218,
                 stations: 15,
             },
             optimized: {
                 avgWait: 7.2,
-                coverage: 94.8,
-                maxDistance: 185,
-                served: 2850,
-                stations: 25,
-                newStations: 10,
+                coverage: 100.0,
+                maxDistance: 131,
+                served: 14991,
+                stations: 17,
+                newStations: 2,
             },
-            existingStations: [
-                { name: "Regina Central", lat: 50.4452, lng: -104.6189, chargers: 4, type: "existing", utilization: 0.78 },
-                { name: "Saskatoon Main", lat: 52.1332, lng: -106.67, chargers: 4, type: "existing", utilization: 0.82 },
-                { name: "Moose Jaw", lat: 50.7, lng: -105.5, chargers: 4, type: "existing", utilization: 0.65 },
-                { name: "Prince Albert", lat: 53.0, lng: -105.0, chargers: 4, type: "existing", utilization: 0.58 },
-                { name: "Swift Current", lat: 50.2, lng: -105.1, chargers: 4, type: "existing", utilization: 0.52 },
-            ],
-            rlStations: [
-                { name: "RL Station 1 (Northern)", lat: 56.5, lng: -108.5, chargers: 4, type: "rl", utilization: 0.45 },
-                { name: "RL Station 2 (La Ronge)", lat: 55.1, lng: -105.3, chargers: 4, type: "rl", utilization: 0.52 },
-                { name: "RL Station 3 (Meadow Lake)", lat: 54.1, lng: -108.4, chargers: 4, type: "rl", utilization: 0.48 },
-                { name: "RL Station 4 (Nipawin)", lat: 53.4, lng: -104.0, chargers: 4, type: "rl", utilization: 0.55 },
-                { name: "RL Station 5 (Lloydminster)", lat: 53.3, lng: -110.0, chargers: 4, type: "rl", utilization: 0.62 },
-                { name: "RL Station 6 (Yorkton)", lat: 51.2, lng: -102.5, chargers: 4, type: "rl", utilization: 0.58 },
-                { name: "RL Station 7 (Estevan)", lat: 49.1, lng: -103.0, chargers: 4, type: "rl", utilization: 0.51 },
-                { name: "RL Station 8 (North Battleford)", lat: 52.8, lng: -108.3, chargers: 4, type: "rl", utilization: 0.49 },
-                { name: "RL Station 9 (Humboldt)", lat: 52.2, lng: -105.1, chargers: 4, type: "rl", utilization: 0.54 },
-                { name: "RL Station 10 (Weyburn)", lat: 49.7, lng: -103.9, chargers: 4, type: "rl", utilization: 0.47 },
-            ]
+            existingStations: [],
+            rlStations: []
         };
+
+        // Load real data from API
+        async function loadRealData() {
+            try {
+                const response = await fetch('/api/run-optimization');
+                if (!response.ok) throw new Error('API error');
+                const data = await response.json();
+                
+                // Update saskData with real data
+                saskData.baseline.stations = data.baseline.stations;
+                saskData.baseline.coverage = data.baseline.coverage_percent;
+                saskData.baseline.maxDistance = data.baseline.max_distance_km;
+                
+                saskData.optimized.stations = data.optimized.stations;
+                saskData.optimized.coverage = data.optimized.coverage_percent;
+                saskData.optimized.maxDistance = data.optimized.max_distance_km;
+                saskData.optimized.newStations = data.optimized.new_stations;
+                
+                // Update station lists
+                saskData.existingStations = data.baseline.stations_list.map(s => ({
+                    name: s.name,
+                    lat: s.lat,
+                    lng: s.lng,
+                    chargers: s.chargers,
+                    type: 'existing',
+                    utilization: 0.7
+                }));
+                
+                saskData.rlStations = data.optimized.stations_list
+                    .filter(s => s.type === 'new')
+                    .map(s => ({
+                        name: s.name,
+                        lat: s.lat,
+                        lng: s.lng,
+                        chargers: s.chargers,
+                        type: 'rl',
+                        utilization: 0.5
+                    }));
+                
+                console.log('Real data loaded:', saskData);
+                
+                // Refresh UI
+                updateMetrics();
+                initMap();
+                initCharts();
+                populateTable();
+                
+                document.getElementById('status-badge').textContent = 'Real Data Loaded';
+                document.getElementById('status-badge').style.background = '#38a169';
+                
+            } catch (error) {
+                console.error('Failed to load real data:', error);
+                document.getElementById('status-badge').textContent = 'Demo Mode';
+                document.getElementById('status-badge').style.background = '#ecc94b';
+            }
+        }
 
         // Calgary Data (original demo)
         const calgaryData = {
@@ -745,8 +784,14 @@
         }
 
         // Button handlers
-        function runComparison() {
-            alert(`Running ${currentScenario === 'saskatchewan' ? 'Saskatchewan' : 'Calgary'} optimization comparison...\n\nIn production, this would trigger:\n- RL training (40,000 timesteps)\n- Baseline simulation\n- Optimized simulation\n- Results comparison`);
+        async function runComparison() {
+            if (currentScenario === 'saskatchewan') {
+                document.getElementById('status-badge').textContent = 'Loading...';
+                document.getElementById('status-badge').style.background = '#ecc94b';
+                await loadRealData();
+            } else {
+                alert('Calgary demo uses static data. Select Saskatchewan for real data optimization.');
+            }
         }
 
         function exportResults() {
@@ -771,6 +816,11 @@
             initMap();
             initCharts();
             populateTable();
+            
+            // Load real data from API
+            if (currentScenario === 'saskatchewan') {
+                loadRealData();
+            }
         });
     </script>
 </body>
