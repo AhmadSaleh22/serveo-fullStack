@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EV Charging Optimization - Pilot Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            background: #1a365d;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .header .status {
+            background: #48bb78;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Metric Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .metric-card .label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        .metric-card .values {
+            display: flex;
+            gap: 1rem;
+            align-items: baseline;
+        }
+        .metric-card .before {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #e53e3e;
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .metric-card .after {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #38a169;
+        }
+        .metric-card .change {
+            font-size: 0.875rem;
+            color: #38a169;
+            margin-top: 0.25rem;
+        }
+        .metric-card .change.negative {
+            color: #e53e3e;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .chart-container h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: #1a365d;
+        }
+        .chart-wrapper {
+            position: relative;
+            height: 280px;
+        }
+
+        /* Map */
+        .map-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        #map {
+            height: 400px;
+            border-radius: 4px;
+        }
+
+        /* Station Table */
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-top: 1.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #4a5568;
+        }
+        td {
+            font-size: 0.875rem;
+        }
+        .util-bar {
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 8px;
+            width: 100px;
+            overflow: hidden;
+        }
+        .util-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        .util-good { background: #48bb78; }
+        .util-warn { background: #ecc94b; }
+        .util-high { background: #e53e3e; }
+
+        /* Controls */
+        .controls {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .controls label {
+            font-size: 0.875rem;
+            color: #4a5568;
+        }
+        .controls select, .controls input {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        .controls button {
+            background: #3182ce;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        .controls button:hover {
+            background: #2c5282;
+        }
+
+        @media (max-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>EV Charging Optimization - Calgary Pilot</h1>
+        <span class="status">Demo Mode</span>
+    </div>
+
+    <div class="container">
+        <!-- Controls -->
+        <div class="controls">
+            <label>Scenario:</label>
+            <select id="scenario-select">
+                <option value="demo">Calgary 2027 Pilot</option>
+            </select>
+            <button onclick="runComparison()">Run Comparison</button>
+            <button onclick="exportResults()">Export Results</button>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="label">Average Wait Time</div>
+                <div class="values">
+                    <span class="before" id="wait-before">18 min</span>
+                    <span class="after" id="wait-after">6 min</span>
+                </div>
+                <div class="change" id="wait-change">-67% improvement</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Peak Wait Time (95th %ile)</div>
+                <div class="values">
+                    <span class="before" id="peak-before">45 min</span>
+                    <span class="after" id="peak-after">15 min</span>
+                </div>
+                <div class="change" id="peak-change">-67% improvement</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Avg Utilization</div>
+                <div class="values">
+                    <span class="before" id="util-before">92%</span>
+                    <span class="after" id="util-after">68%</span>
+                </div>
+                <div class="change" id="util-change">Now in optimal range</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Zone Coverage</div>
+                <div class="values">
+                    <span class="before" id="cov-before">75%</span>
+                    <span class="after" id="cov-after">95%</span>
+                </div>
+                <div class="change" id="cov-change">+20 percentage points</div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>Wait Time by Station (Baseline vs Optimized)</h3>
+                <div class="chart-wrapper">
+                    <canvas id="waitTimeChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Wait Time by Hour of Day</h3>
+                <div class="chart-wrapper">
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map and Utilization -->
+        <div class="charts-grid">
+            <div class="map-container">
+                <h3>Station Locations</h3>
+                <div id="map"></div>
+            </div>
+            <div class="chart-container">
+                <h3>Utilization by Station</h3>
+                <div class="chart-wrapper">
+                    <canvas id="utilizationChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Station Details Table -->
+        <div class="table-container">
+            <h3 style="margin-bottom: 1rem; color: #1a365d;">Optimized Station Configuration</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Station</th>
+                        <th>Zone</th>
+                        <th>Chargers</th>
+                        <th>Avg Wait</th>
+                        <th>Utilization</th>
+                        <th>Throughput/hr</th>
+                    </tr>
+                </thead>
+                <tbody id="station-table">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Demo data - replace with API calls in production
+        const demoData = {
+            baseline: {
+                avgWait: 18.2,
+                peakWait: 45.3,
+                utilization: 0.92,
+                coverage: 0.75,
+                stations: [
+                    { name: "Downtown Central", zone: "Downtown", chargers: 3, wait: 22.5, utilization: 0.95, throughput: 3.8 },
+                    { name: "Beltline Mall", zone: "Beltline", chargers: 2, wait: 28.1, utilization: 0.98, throughput: 2.6 },
+                    { name: "North Hub", zone: "North", chargers: 2, wait: 15.3, utilization: 0.82, throughput: 2.2 },
+                ]
+            },
+            optimized: {
+                avgWait: 5.8,
+                peakWait: 14.7,
+                utilization: 0.68,
+                coverage: 0.95,
+                stations: [
+                    { name: "Downtown Central", zone: "Downtown", chargers: 5, wait: 4.2, utilization: 0.72, throughput: 5.8, lat: 51.045, lng: -114.058 },
+                    { name: "Beltline Mall", zone: "Beltline", chargers: 4, wait: 5.1, utilization: 0.65, throughput: 4.2, lat: 51.038, lng: -114.072 },
+                    { name: "Kensington Plaza", zone: "Kensington", chargers: 3, wait: 6.8, utilization: 0.58, throughput: 2.8, lat: 51.055, lng: -114.088 },
+                    { name: "Mission Grocery", zone: "Mission", chargers: 4, wait: 5.5, utilization: 0.70, throughput: 4.5, lat: 51.034, lng: -114.056 },
+                    { name: "Bridgeland Hub", zone: "Bridgeland", chargers: 3, wait: 7.2, utilization: 0.62, throughput: 2.9, lat: 51.056, lng: -114.042 },
+                ]
+            },
+            hourlyBaseline: [12, 8, 5, 4, 5, 8, 15, 22, 28, 20, 18, 16, 18, 17, 16, 18, 22, 30, 35, 28, 22, 18, 15, 12],
+            hourlyOptimized: [3, 2, 2, 1, 2, 3, 5, 7, 9, 6, 5, 5, 6, 5, 5, 6, 7, 10, 12, 9, 7, 5, 4, 3]
+        };
+
+        // Initialize charts
+        function initCharts() {
+            // Wait Time Comparison Chart
+            const waitCtx = document.getElementById('waitTimeChart').getContext('2d');
+            new Chart(waitCtx, {
+                type: 'bar',
+                data: {
+                    labels: demoData.optimized.stations.map(s => s.name),
+                    datasets: [
+                        {
+                            label: 'Baseline',
+                            data: demoData.baseline.stations.map(s => s.wait).concat([0, 0]),
+                            backgroundColor: 'rgba(229, 62, 62, 0.7)',
+                            borderColor: 'rgba(229, 62, 62, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Optimized',
+                            data: demoData.optimized.stations.map(s => s.wait),
+                            backgroundColor: 'rgba(56, 161, 105, 0.7)',
+                            borderColor: 'rgba(56, 161, 105, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Wait Time (minutes)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+
+            // Hourly Wait Time Chart
+            const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+            new Chart(hourlyCtx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [
+                        {
+                            label: 'Baseline',
+                            data: demoData.hourlyBaseline,
+                            borderColor: 'rgba(229, 62, 62, 1)',
+                            backgroundColor: 'rgba(229, 62, 62, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Optimized',
+                            data: demoData.hourlyOptimized,
+                            borderColor: 'rgba(56, 161, 105, 1)',
+                            backgroundColor: 'rgba(56, 161, 105, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Avg Wait (minutes)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'top' }
+                    }
+                }
+            });
+
+            // Utilization Chart
+            const utilCtx = document.getElementById('utilizationChart').getContext('2d');
+            new Chart(utilCtx, {
+                type: 'bar',
+                data: {
+                    labels: demoData.optimized.stations.map(s => s.name),
+                    datasets: [{
+                        label: 'Utilization',
+                        data: demoData.optimized.stations.map(s => s.utilization * 100),
+                        backgroundColor: demoData.optimized.stations.map(s => {
+                            if (s.utilization < 0.6) return 'rgba(72, 187, 120, 0.7)';
+                            if (s.utilization < 0.8) return 'rgba(236, 201, 75, 0.7)';
+                            return 'rgba(229, 62, 62, 0.7)';
+                        }),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Utilization (%)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            annotations: {
+                                target: {
+                                    type: 'box',
+                                    xMin: 50,
+                                    xMax: 70,
+                                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                                    borderColor: 'rgba(72, 187, 120, 0.5)',
+                                    borderWidth: 1
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize map
+        function initMap() {
+            const map = L.map('map').setView([51.045, -114.07], 12);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add station markers
+            demoData.optimized.stations.forEach(station => {
+                const color = station.utilization < 0.6 ? '#48bb78' :
+                              station.utilization < 0.8 ? '#ecc94b' : '#e53e3e';
+
+                const marker = L.circleMarker([station.lat, station.lng], {
+                    radius: 8 + station.chargers * 2,
+                    fillColor: color,
+                    color: '#1a365d',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <strong>${station.name}</strong><br>
+                    Zone: ${station.zone}<br>
+                    Chargers: ${station.chargers}<br>
+                    Avg Wait: ${station.wait.toFixed(1)} min<br>
+                    Utilization: ${(station.utilization * 100).toFixed(0)}%
+                `);
+            });
+        }
+
+        // Populate station table
+        function populateTable() {
+            const tbody = document.getElementById('station-table');
+            tbody.innerHTML = demoData.optimized.stations.map(s => {
+                const utilClass = s.utilization < 0.6 ? 'util-good' :
+                                  s.utilization < 0.8 ? 'util-warn' : 'util-high';
+                return `
+                    <tr>
+                        <td><strong>${s.name}</strong></td>
+                        <td>${s.zone}</td>
+                        <td>${s.chargers}</td>
+                        <td>${s.wait.toFixed(1)} min</td>
+                        <td>
+                            <div class="util-bar">
+                                <div class="util-bar-fill ${utilClass}" style="width: ${s.utilization * 100}%"></div>
+                            </div>
+                            ${(s.utilization * 100).toFixed(0)}%
+                        </td>
+                        <td>${s.throughput.toFixed(1)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Update metric cards
+        function updateMetrics() {
+            const b = demoData.baseline;
+            const o = demoData.optimized;
+
+            document.getElementById('wait-before').textContent = `${b.avgWait.toFixed(0)} min`;
+            document.getElementById('wait-after').textContent = `${o.avgWait.toFixed(0)} min`;
+            document.getElementById('wait-change').textContent =
+                `-${((b.avgWait - o.avgWait) / b.avgWait * 100).toFixed(0)}% improvement`;
+
+            document.getElementById('peak-before').textContent = `${b.peakWait.toFixed(0)} min`;
+            document.getElementById('peak-after').textContent = `${o.peakWait.toFixed(0)} min`;
+            document.getElementById('peak-change').textContent =
+                `-${((b.peakWait - o.peakWait) / b.peakWait * 100).toFixed(0)}% improvement`;
+
+            document.getElementById('util-before').textContent = `${(b.utilization * 100).toFixed(0)}%`;
+            document.getElementById('util-after').textContent = `${(o.utilization * 100).toFixed(0)}%`;
+
+            document.getElementById('cov-before').textContent = `${(b.coverage * 100).toFixed(0)}%`;
+            document.getElementById('cov-after').textContent = `${(o.coverage * 100).toFixed(0)}%`;
+        }
+
+        // Button handlers
+        function runComparison() {
+            alert('In production, this would trigger a new simulation comparison.\n\nAPI endpoint: POST /api/compare');
+        }
+
+        function exportResults() {
+            const data = JSON.stringify(demoData, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ev_optimization_results.json';
+            a.click();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateMetrics();
+            initCharts();
+            initMap();
+            populateTable();
+        });
+    </script>
+</body>
+</html>

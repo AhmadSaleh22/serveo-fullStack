@@ -1,0 +1,129 @@
+{
+  "generated_at": "2026-02-01T04:27:44.212947",
+  "scenario": "Calgary 2027 Pilot Demo",
+  "zones": 8,
+  "total_demand_evs_per_hour": 19.0,
+  "baseline": {
+    "stations": 4,
+    "chargers": 11,
+    "avg_wait_minutes": 315.2,
+    "p95_wait_minutes": 575.4,
+    "utilization": 1.139,
+    "evs_served": 2406
+  },
+  "optimized": {
+    "stations": 11,
+    "chargers": 24,
+    "total_cost": 1270000,
+    "coverage": 1.0,
+    "avg_wait_minutes": 8.5,
+    "p95_wait_minutes": 47.4,
+    "utilization": 0.554,
+    "evs_served": 2540,
+    "station_details": [
+      {
+        "name": "Downtown Central Parkade",
+        "lat": 51.045,
+        "lng": -114.058,
+        "zone": "downtown",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "Beltline Mall",
+        "lat": 51.038,
+        "lng": -114.072,
+        "zone": "beltline",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "4th Street Station",
+        "lat": 51.036,
+        "lng": -114.064,
+        "zone": "mission",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "Mission Grocery",
+        "lat": 51.034,
+        "lng": -114.056,
+        "zone": "mission",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "East Village Lot",
+        "lat": 51.047,
+        "lng": -114.048,
+        "zone": "downtown",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "Hillhurst Community",
+        "lat": 51.058,
+        "lng": -114.102,
+        "zone": "hillhurst",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "Eau Claire Market",
+        "lat": 51.053,
+        "lng": -114.068,
+        "zone": "downtown",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "17th Ave Station",
+        "lat": 51.037,
+        "lng": -114.08,
+        "zone": "beltline",
+        "chargers": 3,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "Sunnyside Park",
+        "lat": 51.058,
+        "lng": -114.092,
+        "zone": "sunnyside",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "Bridgeland Hub",
+        "lat": 51.056,
+        "lng": -114.042,
+        "zone": "bridgeland",
+        "chargers": 2,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      },
+      {
+        "name": "Inglewood Center",
+        "lat": 51.036,
+        "lng": -114.032,
+        "zone": "inglewood",
+        "chargers": 3,
+        "estimated_wait": Infinity,
+        "estimated_utilization": 1.0
+      }
+    ]
+  },
+  "improvement": {
+    "wait_time_reduction_percent": 97.3,
+    "peak_wait_reduction_percent": 91.8
+  }
+}

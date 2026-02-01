@@ -1,0 +1,15 @@
+# EV Charging Optimization System - Dependencies
+
+# Core
+numpy>=1.24.0
+
+# API
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+
+# HTTP Client (for dashboard API calls if needed)
+httpx>=0.26.0
+
+# Development
+pytest>=7.4.0

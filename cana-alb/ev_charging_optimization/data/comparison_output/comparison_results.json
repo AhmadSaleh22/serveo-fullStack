@@ -1,0 +1,23 @@
+{
+  "greedy": {
+    "time_seconds": 0.27031397819519043,
+    "stations": 9,
+    "chargers": 19,
+    "avg_wait_minutes": 17.435828312570607,
+    "p95_wait_minutes": 79.30494608650648,
+    "utilization": 0.7057569402895983,
+    "evs_served": 2534,
+    "score": 4
+  },
+  "rl": {
+    "time_seconds": 5.001056909561157,
+    "stations": 10,
+    "chargers": 30,
+    "avg_wait_minutes": 3.2694090064715238,
+    "p95_wait_minutes": 24.912722981586626,
+    "utilization": 0.4360456666076395,
+    "evs_served": 2500,
+    "score": 3
+  },
+  "winner": "greedy"
+}
