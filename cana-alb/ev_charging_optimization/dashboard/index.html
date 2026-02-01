@@ -445,24 +445,28 @@
 
     <script>
         // Saskatchewan Data - will be loaded from API
+        // Real Saskatchewan data from 2021 Census + NRCan + Training
         let saskData = {
             baseline: {
-                avgWait: 12.5,
-                coverage: 96.9,
-                maxDistance: 650,
-                served: 13218,
-                stations: 15,
+                avgWait: 85.3,           // From simulation (minutes)
+                coverage: 96.9,          // % population within 150km
+                maxDistance: 650,        // km to nearest station
+                served: 13218,           // EVs served per week
+                stations: 18,            // NRCan existing stations
             },
             optimized: {
-                avgWait: 7.2,
-                coverage: 100.0,
-                maxDistance: 131,
-                served: 14991,
-                stations: 17,
-                newStations: 2,
+                avgWait: 83.2,           // After RL optimization
+                coverage: 100.0,         // Full coverage achieved
+                maxDistance: 131,        // Reduced max distance
+                served: 14991,           // More EVs served
+                stations: 20,            // 18 existing + 2 new
+                newStations: 2,          // RL-proposed stations
             },
+            totalPopulation: 1132505,    // 2021 Census
             existingStations: [],
-            rlStations: []
+            rlStations: [],
+            roads: [],
+            populationCenters: []
         };
 
         // Load real data from API (same data as env.py / data_loader.py)
@@ -513,6 +517,12 @@
                 // Store road segments for map
                 saskData.roads = trainingData.road_segments;
                 saskData.populationCenters = trainingData.population_centers;
+                
+                // Calculate total population from population centers
+                const totalPop = trainingData.population_centers.reduce((sum, p) => sum + (p.population || 0), 0);
+                if (totalPop > 0) {
+                    saskData.totalPopulation = totalPop;
+                }
                 
                 console.log('Saskatchewan data updated:', saskData);
                 
@@ -832,10 +842,13 @@
             document.getElementById('served-change').textContent =
                 `+${o.served - b.served} more EVs`;
 
-            // Update banner
+            // Update banner with real 2021 Census data
             if (currentScenario === 'saskatchewan') {
                 document.getElementById('info-banner').style.display = 'flex';
-                document.getElementById('banner-pop').textContent = `${(saskData.optimized.coverage * 6.5).toFixed(0)}K+`;
+                // Calculate covered population based on coverage percentage
+                const totalPop = saskData.totalPopulation || 1132505;
+                const coveredPop = Math.round(totalPop * (o.coverage / 100));
+                document.getElementById('banner-pop').textContent = `${Math.round(coveredPop / 1000)}K+`;
                 document.getElementById('banner-stations').textContent = saskData.optimized.stations;
                 document.getElementById('banner-new').textContent = saskData.optimized.newStations;
             } else {
