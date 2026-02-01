@@ -1,0 +1,102 @@
+{
+  "generated_at": "2026-02-01T05:17:31.081002",
+  "scenario": "Saskatchewan Province-Wide Optimization",
+  "data": {
+    "population_centers": 20,
+    "total_population": 614165,
+    "existing_stations": 15
+  },
+  "baseline": {
+    "stations": 15,
+    "chargers": 60,
+    "coverage_percent": 96.9,
+    "max_distance_km": 650.0,
+    "avg_wait_minutes": 5120.8,
+    "p95_wait_minutes": 8776.8,
+    "utilization": 1.16,
+    "evs_served": 13218,
+    "evs_balked": 2
+  },
+  "optimized": {
+    "total_stations": 25,
+    "new_rl_stations": 10,
+    "total_chargers": 100,
+    "coverage_percent": 96.9,
+    "max_distance_km": 650.0,
+    "avg_wait_minutes": 5120.8,
+    "p95_wait_minutes": 8776.8,
+    "utilization": 0.696,
+    "evs_served": 13218,
+    "evs_balked": 2,
+    "new_stations": [
+      {
+        "name": "RL Station 1 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 2 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 3 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 4 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 5 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 6 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 7 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 8 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 9 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      },
+      {
+        "name": "RL Station 10 (near Town_13)",
+        "lat": 49.0,
+        "lng": -101.0,
+        "chargers": 4
+      }
+    ]
+  },
+  "improvement": {
+    "coverage_increase_percent": 0.0,
+    "distance_reduction_km": 0.0,
+    "wait_time_reduction_percent": 0.0,
+    "peak_wait_reduction_percent": 0.0,
+    "balk_reduction": 0,
+    "additional_evs_served": 0
+  }
+}

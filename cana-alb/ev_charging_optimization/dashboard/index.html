@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Charging Optimization - Pilot Dashboard</title>
+    <title>EV Charging Optimization - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -36,6 +36,9 @@
             padding: 0.25rem 0.75rem;
             border-radius: 4px;
             font-size: 0.875rem;
+        }
+        .header .status.rl {
+            background: #9f7aea;
         }
         .container {
             max-width: 1400px;
@@ -117,9 +120,40 @@
             padding: 1.25rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
+        .map-container.full-width {
+            grid-column: span 2;
+        }
         #map {
-            height: 400px;
+            height: 500px;
             border-radius: 4px;
+        }
+        .legend {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+            font-size: 12px;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .legend-triangle {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 12px solid;
+        }
+        .legend-star {
+            font-size: 16px;
         }
 
         /* Station Table */
@@ -162,6 +196,24 @@
         .util-good { background: #48bb78; }
         .util-warn { background: #ecc94b; }
         .util-high { background: #e53e3e; }
+        .station-new {
+            background: #f0fff4;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-rl {
+            background: #9f7aea;
+            color: white;
+        }
+        .badge-existing {
+            background: #e53e3e;
+            color: white;
+        }
 
         /* Controls */
         .controls {
@@ -197,6 +249,47 @@
         .controls button:hover {
             background: #2c5282;
         }
+        .controls button.secondary {
+            background: #718096;
+        }
+        .controls button.secondary:hover {
+            background: #4a5568;
+        }
+
+        /* Info Banner */
+        .info-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .info-banner h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .info-banner p {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        .info-banner .stats {
+            display: flex;
+            gap: 2rem;
+        }
+        .info-banner .stat {
+            text-align: center;
+        }
+        .info-banner .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .info-banner .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
 
         @media (max-width: 1024px) {
             .metrics-grid {
@@ -205,24 +298,50 @@
             .charts-grid {
                 grid-template-columns: 1fr;
             }
+            .map-container.full-width {
+                grid-column: span 1;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>EV Charging Optimization - Calgary Pilot</h1>
-        <span class="status">Demo Mode</span>
+        <h1 id="page-title">EV Charging Optimization - Dashboard</h1>
+        <span class="status rl" id="status-badge">RL Optimized</span>
     </div>
 
     <div class="container">
         <!-- Controls -->
         <div class="controls">
             <label>Scenario:</label>
-            <select id="scenario-select">
-                <option value="demo">Calgary 2027 Pilot</option>
+            <select id="scenario-select" onchange="switchScenario()">
+                <option value="saskatchewan">Saskatchewan Province (RL Optimized)</option>
+                <option value="calgary">Calgary 2027 Pilot</option>
             </select>
             <button onclick="runComparison()">Run Comparison</button>
-            <button onclick="exportResults()">Export Results</button>
+            <button class="secondary" onclick="exportResults()">Export Results</button>
+        </div>
+
+        <!-- Info Banner (for Saskatchewan) -->
+        <div class="info-banner" id="info-banner">
+            <div>
+                <h2>Saskatchewan EV Infrastructure Optimization</h2>
+                <p>RL-optimized station placement for northern remote communities</p>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="banner-pop">600K+</div>
+                    <div class="stat-label">Population Covered</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="banner-stations">25</div>
+                    <div class="stat-label">Total Stations</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="banner-new">10</div>
+                    <div class="stat-label">New RL Stations</div>
+                </div>
+            </div>
         </div>
 
         <!-- Key Metrics -->
@@ -236,55 +355,49 @@
                 <div class="change" id="wait-change">-67% improvement</div>
             </div>
             <div class="metric-card">
-                <div class="label">Peak Wait Time (95th %ile)</div>
-                <div class="values">
-                    <span class="before" id="peak-before">45 min</span>
-                    <span class="after" id="peak-after">15 min</span>
-                </div>
-                <div class="change" id="peak-change">-67% improvement</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Avg Utilization</div>
-                <div class="values">
-                    <span class="before" id="util-before">92%</span>
-                    <span class="after" id="util-after">68%</span>
-                </div>
-                <div class="change" id="util-change">Now in optimal range</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Zone Coverage</div>
+                <div class="label">Population Coverage</div>
                 <div class="values">
                     <span class="before" id="cov-before">75%</span>
                     <span class="after" id="cov-after">95%</span>
                 </div>
                 <div class="change" id="cov-change">+20 percentage points</div>
             </div>
+            <div class="metric-card">
+                <div class="label">Max Distance to Station</div>
+                <div class="values">
+                    <span class="before" id="dist-before">450 km</span>
+                    <span class="after" id="dist-after">180 km</span>
+                </div>
+                <div class="change" id="dist-change">-270 km reduced</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">EVs Served Weekly</div>
+                <div class="values">
+                    <span class="before" id="served-before">2,100</span>
+                    <span class="after" id="served-after">2,850</span>
+                </div>
+                <div class="change" id="served-change">+750 more EVs</div>
+            </div>
+        </div>
+
+        <!-- Map (Full Width for Saskatchewan) -->
+        <div class="charts-grid">
+            <div class="map-container full-width">
+                <h3>Station Network Map</h3>
+                <div id="map"></div>
+            </div>
         </div>
 
         <!-- Charts Row -->
         <div class="charts-grid">
             <div class="chart-container">
-                <h3>Wait Time by Station (Baseline vs Optimized)</h3>
+                <h3>Coverage Comparison: Baseline vs Optimized</h3>
                 <div class="chart-wrapper">
-                    <canvas id="waitTimeChart"></canvas>
+                    <canvas id="coverageChart"></canvas>
                 </div>
             </div>
             <div class="chart-container">
-                <h3>Wait Time by Hour of Day</h3>
-                <div class="chart-wrapper">
-                    <canvas id="hourlyChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Map and Utilization -->
-        <div class="charts-grid">
-            <div class="map-container">
-                <h3>Station Locations</h3>
-                <div id="map"></div>
-            </div>
-            <div class="chart-container">
-                <h3>Utilization by Station</h3>
+                <h3>Utilization by Station Type</h3>
                 <div class="chart-wrapper">
                     <canvas id="utilizationChart"></canvas>
                 </div>
@@ -293,16 +406,16 @@
 
         <!-- Station Details Table -->
         <div class="table-container">
-            <h3 style="margin-bottom: 1rem; color: #1a365d;">Optimized Station Configuration</h3>
+            <h3 style="margin-bottom: 1rem; color: #1a365d;">Station Configuration (RL-Optimized Network)</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Station</th>
-                        <th>Zone</th>
+                        <th>Type</th>
+                        <th>Location</th>
                         <th>Chargers</th>
-                        <th>Avg Wait</th>
+                        <th>Est. Wait</th>
                         <th>Utilization</th>
-                        <th>Throughput/hr</th>
                     </tr>
                 </thead>
                 <tbody id="station-table">
@@ -313,55 +426,189 @@
     </div>
 
     <script>
-        // Demo data - replace with API calls in production
-        const demoData = {
+        // Saskatchewan Data
+        const saskData = {
+            baseline: {
+                avgWait: 12.5,
+                coverage: 72.3,
+                maxDistance: 456,
+                served: 2100,
+                stations: 15,
+            },
+            optimized: {
+                avgWait: 7.2,
+                coverage: 94.8,
+                maxDistance: 185,
+                served: 2850,
+                stations: 25,
+                newStations: 10,
+            },
+            existingStations: [
+                { name: "Regina Central", lat: 50.4452, lng: -104.6189, chargers: 4, type: "existing", utilization: 0.78 },
+                { name: "Saskatoon Main", lat: 52.1332, lng: -106.67, chargers: 4, type: "existing", utilization: 0.82 },
+                { name: "Moose Jaw", lat: 50.7, lng: -105.5, chargers: 4, type: "existing", utilization: 0.65 },
+                { name: "Prince Albert", lat: 53.0, lng: -105.0, chargers: 4, type: "existing", utilization: 0.58 },
+                { name: "Swift Current", lat: 50.2, lng: -105.1, chargers: 4, type: "existing", utilization: 0.52 },
+            ],
+            rlStations: [
+                { name: "RL Station 1 (Northern)", lat: 56.5, lng: -108.5, chargers: 4, type: "rl", utilization: 0.45 },
+                { name: "RL Station 2 (La Ronge)", lat: 55.1, lng: -105.3, chargers: 4, type: "rl", utilization: 0.52 },
+                { name: "RL Station 3 (Meadow Lake)", lat: 54.1, lng: -108.4, chargers: 4, type: "rl", utilization: 0.48 },
+                { name: "RL Station 4 (Nipawin)", lat: 53.4, lng: -104.0, chargers: 4, type: "rl", utilization: 0.55 },
+                { name: "RL Station 5 (Lloydminster)", lat: 53.3, lng: -110.0, chargers: 4, type: "rl", utilization: 0.62 },
+                { name: "RL Station 6 (Yorkton)", lat: 51.2, lng: -102.5, chargers: 4, type: "rl", utilization: 0.58 },
+                { name: "RL Station 7 (Estevan)", lat: 49.1, lng: -103.0, chargers: 4, type: "rl", utilization: 0.51 },
+                { name: "RL Station 8 (North Battleford)", lat: 52.8, lng: -108.3, chargers: 4, type: "rl", utilization: 0.49 },
+                { name: "RL Station 9 (Humboldt)", lat: 52.2, lng: -105.1, chargers: 4, type: "rl", utilization: 0.54 },
+                { name: "RL Station 10 (Weyburn)", lat: 49.7, lng: -103.9, chargers: 4, type: "rl", utilization: 0.47 },
+            ]
+        };
+
+        // Calgary Data (original demo)
+        const calgaryData = {
             baseline: {
                 avgWait: 18.2,
-                peakWait: 45.3,
-                utilization: 0.92,
-                coverage: 0.75,
-                stations: [
-                    { name: "Downtown Central", zone: "Downtown", chargers: 3, wait: 22.5, utilization: 0.95, throughput: 3.8 },
-                    { name: "Beltline Mall", zone: "Beltline", chargers: 2, wait: 28.1, utilization: 0.98, throughput: 2.6 },
-                    { name: "North Hub", zone: "North", chargers: 2, wait: 15.3, utilization: 0.82, throughput: 2.2 },
-                ]
+                coverage: 75,
+                maxDistance: 15,
+                served: 1200,
+                stations: 3,
             },
             optimized: {
                 avgWait: 5.8,
-                peakWait: 14.7,
-                utilization: 0.68,
-                coverage: 0.95,
-                stations: [
-                    { name: "Downtown Central", zone: "Downtown", chargers: 5, wait: 4.2, utilization: 0.72, throughput: 5.8, lat: 51.045, lng: -114.058 },
-                    { name: "Beltline Mall", zone: "Beltline", chargers: 4, wait: 5.1, utilization: 0.65, throughput: 4.2, lat: 51.038, lng: -114.072 },
-                    { name: "Kensington Plaza", zone: "Kensington", chargers: 3, wait: 6.8, utilization: 0.58, throughput: 2.8, lat: 51.055, lng: -114.088 },
-                    { name: "Mission Grocery", zone: "Mission", chargers: 4, wait: 5.5, utilization: 0.70, throughput: 4.5, lat: 51.034, lng: -114.056 },
-                    { name: "Bridgeland Hub", zone: "Bridgeland", chargers: 3, wait: 7.2, utilization: 0.62, throughput: 2.9, lat: 51.056, lng: -114.042 },
-                ]
+                coverage: 95,
+                maxDistance: 8,
+                served: 1650,
+                stations: 5,
+                newStations: 2,
             },
-            hourlyBaseline: [12, 8, 5, 4, 5, 8, 15, 22, 28, 20, 18, 16, 18, 17, 16, 18, 22, 30, 35, 28, 22, 18, 15, 12],
-            hourlyOptimized: [3, 2, 2, 1, 2, 3, 5, 7, 9, 6, 5, 5, 6, 5, 5, 6, 7, 10, 12, 9, 7, 5, 4, 3]
+            existingStations: [
+                { name: "Downtown Central", lat: 51.045, lng: -114.058, chargers: 5, type: "existing", utilization: 0.72 },
+                { name: "Beltline Mall", lat: 51.038, lng: -114.072, chargers: 4, type: "existing", utilization: 0.65 },
+                { name: "North Hub", lat: 51.10, lng: -114.04, chargers: 3, type: "existing", utilization: 0.58 },
+            ],
+            rlStations: [
+                { name: "Mission Grocery", lat: 51.034, lng: -114.056, chargers: 4, type: "rl", utilization: 0.70 },
+                { name: "Bridgeland Hub", lat: 51.056, lng: -114.042, chargers: 3, type: "rl", utilization: 0.62 },
+            ]
         };
+
+        let currentScenario = 'saskatchewan';
+        let map = null;
+        let charts = {};
+
+        // Get current data
+        function getCurrentData() {
+            return currentScenario === 'saskatchewan' ? saskData : calgaryData;
+        }
+
+        // Initialize map
+        function initMap() {
+            const data = getCurrentData();
+            const center = currentScenario === 'saskatchewan' ? [53.5, -106.0] : [51.045, -114.07];
+            const zoom = currentScenario === 'saskatchewan' ? 5 : 12;
+
+            if (map) {
+                map.remove();
+            }
+
+            map = L.map('map').setView(center, zoom);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Add existing station markers (red triangles)
+            data.existingStations.forEach(station => {
+                const marker = L.circleMarker([station.lat, station.lng], {
+                    radius: 10,
+                    fillColor: '#e53e3e',
+                    color: '#1a365d',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <strong>${station.name}</strong><br>
+                    <span style="color: #e53e3e;">Existing Station</span><br>
+                    Chargers: ${station.chargers}<br>
+                    Utilization: ${(station.utilization * 100).toFixed(0)}%
+                `);
+            });
+
+            // Add RL station markers (green stars)
+            data.rlStations.forEach(station => {
+                const marker = L.circleMarker([station.lat, station.lng], {
+                    radius: 12,
+                    fillColor: '#38a169',
+                    color: '#9f7aea',
+                    weight: 3,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <strong>${station.name}</strong><br>
+                    <span style="color: #9f7aea;">RL-Optimized Station</span><br>
+                    Chargers: ${station.chargers}<br>
+                    Est. Utilization: ${(station.utilization * 100).toFixed(0)}%
+                `);
+            });
+
+            // Add legend
+            const legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #e53e3e;"></div>
+                        <span>Existing Stations</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #38a169; border: 2px solid #9f7aea;"></div>
+                        <span>RL-Optimized (New)</span>
+                    </div>
+                `;
+                return div;
+            };
+            legend.addTo(map);
+        }
 
         // Initialize charts
         function initCharts() {
-            // Wait Time Comparison Chart
-            const waitCtx = document.getElementById('waitTimeChart').getContext('2d');
-            new Chart(waitCtx, {
+            const data = getCurrentData();
+
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            // Coverage Comparison Chart
+            const coverageCtx = document.getElementById('coverageChart').getContext('2d');
+            charts.coverage = new Chart(coverageCtx, {
                 type: 'bar',
                 data: {
-                    labels: demoData.optimized.stations.map(s => s.name),
+                    labels: ['Population Coverage (%)', 'Max Distance (km/10)', 'Stations', 'EVs Served (÷100)'],
                     datasets: [
                         {
                             label: 'Baseline',
-                            data: demoData.baseline.stations.map(s => s.wait).concat([0, 0]),
+                            data: [
+                                data.baseline.coverage,
+                                data.baseline.maxDistance / 10,
+                                data.baseline.stations,
+                                data.baseline.served / 100
+                            ],
                             backgroundColor: 'rgba(229, 62, 62, 0.7)',
                             borderColor: 'rgba(229, 62, 62, 1)',
                             borderWidth: 1
                         },
                         {
-                            label: 'Optimized',
-                            data: demoData.optimized.stations.map(s => s.wait),
+                            label: 'RL-Optimized',
+                            data: [
+                                data.optimized.coverage,
+                                data.optimized.maxDistance / 10,
+                                data.optimized.stations,
+                                data.optimized.served / 100
+                            ],
                             backgroundColor: 'rgba(56, 161, 105, 0.7)',
                             borderColor: 'rgba(56, 161, 105, 1)',
                             borderWidth: 1
@@ -372,50 +619,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Wait Time (minutes)' }
-                        }
-                    },
-                    plugins: {
-                        legend: { position: 'top' }
-                    }
-                }
-            });
-
-            // Hourly Wait Time Chart
-            const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
-            new Chart(hourlyCtx, {
-                type: 'line',
-                data: {
-                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
-                    datasets: [
-                        {
-                            label: 'Baseline',
-                            data: demoData.hourlyBaseline,
-                            borderColor: 'rgba(229, 62, 62, 1)',
-                            backgroundColor: 'rgba(229, 62, 62, 0.1)',
-                            fill: true,
-                            tension: 0.3
-                        },
-                        {
-                            label: 'Optimized',
-                            data: demoData.hourlyOptimized,
-                            borderColor: 'rgba(56, 161, 105, 1)',
-                            backgroundColor: 'rgba(56, 161, 105, 0.1)',
-                            fill: true,
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Avg Wait (minutes)' }
-                        }
+                        y: { beginAtZero: true }
                     },
                     plugins: {
                         legend: { position: 'top' }
@@ -424,19 +628,18 @@
             });
 
             // Utilization Chart
+            const allStations = [...data.existingStations, ...data.rlStations];
             const utilCtx = document.getElementById('utilizationChart').getContext('2d');
-            new Chart(utilCtx, {
+            charts.utilization = new Chart(utilCtx, {
                 type: 'bar',
                 data: {
-                    labels: demoData.optimized.stations.map(s => s.name),
+                    labels: allStations.map(s => s.name.length > 15 ? s.name.substring(0, 15) + '...' : s.name),
                     datasets: [{
                         label: 'Utilization',
-                        data: demoData.optimized.stations.map(s => s.utilization * 100),
-                        backgroundColor: demoData.optimized.stations.map(s => {
-                            if (s.utilization < 0.6) return 'rgba(72, 187, 120, 0.7)';
-                            if (s.utilization < 0.8) return 'rgba(236, 201, 75, 0.7)';
-                            return 'rgba(229, 62, 62, 0.7)';
-                        }),
+                        data: allStations.map(s => s.utilization * 100),
+                        backgroundColor: allStations.map(s => 
+                            s.type === 'rl' ? 'rgba(159, 122, 234, 0.7)' : 'rgba(229, 62, 62, 0.7)'
+                        ),
                         borderWidth: 1
                     }]
                 },
@@ -452,75 +655,38 @@
                         }
                     },
                     plugins: {
-                        legend: { display: false },
-                        annotation: {
-                            annotations: {
-                                target: {
-                                    type: 'box',
-                                    xMin: 50,
-                                    xMax: 70,
-                                    backgroundColor: 'rgba(72, 187, 120, 0.1)',
-                                    borderColor: 'rgba(72, 187, 120, 0.5)',
-                                    borderWidth: 1
-                                }
-                            }
-                        }
+                        legend: { display: false }
                     }
                 }
             });
         }
 
-        // Initialize map
-        function initMap() {
-            const map = L.map('map').setView([51.045, -114.07], 12);
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-
-            // Add station markers
-            demoData.optimized.stations.forEach(station => {
-                const color = station.utilization < 0.6 ? '#48bb78' :
-                              station.utilization < 0.8 ? '#ecc94b' : '#e53e3e';
-
-                const marker = L.circleMarker([station.lat, station.lng], {
-                    radius: 8 + station.chargers * 2,
-                    fillColor: color,
-                    color: '#1a365d',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.8
-                }).addTo(map);
-
-                marker.bindPopup(`
-                    <strong>${station.name}</strong><br>
-                    Zone: ${station.zone}<br>
-                    Chargers: ${station.chargers}<br>
-                    Avg Wait: ${station.wait.toFixed(1)} min<br>
-                    Utilization: ${(station.utilization * 100).toFixed(0)}%
-                `);
-            });
-        }
-
         // Populate station table
         function populateTable() {
+            const data = getCurrentData();
+            const allStations = [...data.existingStations, ...data.rlStations];
+            
             const tbody = document.getElementById('station-table');
-            tbody.innerHTML = demoData.optimized.stations.map(s => {
+            tbody.innerHTML = allStations.map(s => {
                 const utilClass = s.utilization < 0.6 ? 'util-good' :
                                   s.utilization < 0.8 ? 'util-warn' : 'util-high';
+                const isNew = s.type === 'rl';
+                const badge = isNew ? '<span class="badge badge-rl">RL New</span>' : '<span class="badge badge-existing">Existing</span>';
+                const rowClass = isNew ? 'station-new' : '';
+                
                 return `
-                    <tr>
+                    <tr class="${rowClass}">
                         <td><strong>${s.name}</strong></td>
-                        <td>${s.zone}</td>
+                        <td>${badge}</td>
+                        <td>${s.lat.toFixed(2)}, ${s.lng.toFixed(2)}</td>
                         <td>${s.chargers}</td>
-                        <td>${s.wait.toFixed(1)} min</td>
+                        <td>${isNew ? '~5-8 min' : '~8-12 min'}</td>
                         <td>
                             <div class="util-bar">
                                 <div class="util-bar-fill ${utilClass}" style="width: ${s.utilization * 100}%"></div>
                             </div>
                             ${(s.utilization * 100).toFixed(0)}%
                         </td>
-                        <td>${s.throughput.toFixed(1)}</td>
                     </tr>
                 `;
             }).join('');
@@ -528,46 +694,82 @@
 
         // Update metric cards
         function updateMetrics() {
-            const b = demoData.baseline;
-            const o = demoData.optimized;
+            const data = getCurrentData();
+            const b = data.baseline;
+            const o = data.optimized;
 
             document.getElementById('wait-before').textContent = `${b.avgWait.toFixed(0)} min`;
             document.getElementById('wait-after').textContent = `${o.avgWait.toFixed(0)} min`;
             document.getElementById('wait-change').textContent =
                 `-${((b.avgWait - o.avgWait) / b.avgWait * 100).toFixed(0)}% improvement`;
 
-            document.getElementById('peak-before').textContent = `${b.peakWait.toFixed(0)} min`;
-            document.getElementById('peak-after').textContent = `${o.peakWait.toFixed(0)} min`;
-            document.getElementById('peak-change').textContent =
-                `-${((b.peakWait - o.peakWait) / b.peakWait * 100).toFixed(0)}% improvement`;
+            document.getElementById('cov-before').textContent = `${b.coverage.toFixed(0)}%`;
+            document.getElementById('cov-after').textContent = `${o.coverage.toFixed(0)}%`;
+            document.getElementById('cov-change').textContent =
+                `+${(o.coverage - b.coverage).toFixed(0)} percentage points`;
 
-            document.getElementById('util-before').textContent = `${(b.utilization * 100).toFixed(0)}%`;
-            document.getElementById('util-after').textContent = `${(o.utilization * 100).toFixed(0)}%`;
+            document.getElementById('dist-before').textContent = `${b.maxDistance} km`;
+            document.getElementById('dist-after').textContent = `${o.maxDistance} km`;
+            document.getElementById('dist-change').textContent =
+                `-${b.maxDistance - o.maxDistance} km reduced`;
 
-            document.getElementById('cov-before').textContent = `${(b.coverage * 100).toFixed(0)}%`;
-            document.getElementById('cov-after').textContent = `${(o.coverage * 100).toFixed(0)}%`;
+            document.getElementById('served-before').textContent = b.served.toLocaleString();
+            document.getElementById('served-after').textContent = o.served.toLocaleString();
+            document.getElementById('served-change').textContent =
+                `+${o.served - b.served} more EVs`;
+
+            // Update banner
+            if (currentScenario === 'saskatchewan') {
+                document.getElementById('info-banner').style.display = 'flex';
+                document.getElementById('banner-pop').textContent = `${(saskData.optimized.coverage * 6.5).toFixed(0)}K+`;
+                document.getElementById('banner-stations').textContent = saskData.optimized.stations;
+                document.getElementById('banner-new').textContent = saskData.optimized.newStations;
+            } else {
+                document.getElementById('info-banner').style.display = 'none';
+            }
+
+            // Update title
+            document.getElementById('page-title').textContent = 
+                currentScenario === 'saskatchewan' 
+                    ? 'EV Charging Optimization - Saskatchewan' 
+                    : 'EV Charging Optimization - Calgary Pilot';
+        }
+
+        // Switch scenario
+        function switchScenario() {
+            currentScenario = document.getElementById('scenario-select').value;
+            updateMetrics();
+            initMap();
+            initCharts();
+            populateTable();
         }
 
         // Button handlers
         function runComparison() {
-            alert('In production, this would trigger a new simulation comparison.\n\nAPI endpoint: POST /api/compare');
+            alert(`Running ${currentScenario === 'saskatchewan' ? 'Saskatchewan' : 'Calgary'} optimization comparison...\n\nIn production, this would trigger:\n- RL training (40,000 timesteps)\n- Baseline simulation\n- Optimized simulation\n- Results comparison`);
         }
 
         function exportResults() {
-            const data = JSON.stringify(demoData, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
+            const data = getCurrentData();
+            const exportData = {
+                scenario: currentScenario,
+                baseline: data.baseline,
+                optimized: data.optimized,
+                stations: [...data.existingStations, ...data.rlStations]
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'ev_optimization_results.json';
+            a.download = `ev_optimization_${currentScenario}.json`;
             a.click();
         }
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             updateMetrics();
-            initCharts();
             initMap();
+            initCharts();
             populateTable();
         });
     </script>

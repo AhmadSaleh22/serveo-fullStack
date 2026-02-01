@@ -1,0 +1,166 @@
+{
+  "type": "FeatureCollection",
+  "name": "rl_optimized_stations",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 0,
+        "name": "RL Station 1 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 1,
+        "name": "RL Station 2 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 2,
+        "name": "RL Station 3 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 3,
+        "name": "RL Station 4 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 4,
+        "name": "RL Station 5 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 5,
+        "name": "RL Station 6 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 6,
+        "name": "RL Station 7 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 7,
+        "name": "RL Station 8 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 8,
+        "name": "RL Station 9 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 9,
+        "name": "RL Station 10 (near Town_13)",
+        "chargers": 4,
+        "type": "rl_optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -101.0,
+          49.0
+        ]
+      }
+    }
+  ]
+}
