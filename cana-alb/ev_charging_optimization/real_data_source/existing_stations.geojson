@@ -1,0 +1,22 @@
+{
+"type": "FeatureCollection",
+"name": "existing_stations",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "station_id": 0, "lat": 50.4452, "lon": -104.6189, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -104.6189, 50.4452 ] } },
+{ "type": "Feature", "properties": { "station_id": 1, "lat": 52.1332, "lon": -106.67, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -106.67, 52.1332 ] } },
+{ "type": "Feature", "properties": { "station_id": 2, "lat": 50.7, "lon": -105.5, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -105.5, 50.7 ] } },
+{ "type": "Feature", "properties": { "station_id": 3, "lat": 51.2, "lon": -106.2, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -106.2, 51.2 ] } },
+{ "type": "Feature", "properties": { "station_id": 4, "lat": 52.5, "lon": -105.8, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -105.8, 52.5 ] } },
+{ "type": "Feature", "properties": { "station_id": 5, "lat": 53.0, "lon": -105.0, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -105.0, 53.0 ] } },
+{ "type": "Feature", "properties": { "station_id": 6, "lat": 50.0, "lon": -104.2, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -104.2, 50.0 ] } },
+{ "type": "Feature", "properties": { "station_id": 7, "lat": 51.5, "lon": -106.5, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -106.5, 51.5 ] } },
+{ "type": "Feature", "properties": { "station_id": 8, "lat": 52.8, "lon": -104.9, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -104.9, 52.8 ] } },
+{ "type": "Feature", "properties": { "station_id": 9, "lat": 50.2, "lon": -105.1, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -105.1, 50.2 ] } },
+{ "type": "Feature", "properties": { "station_id": 10, "lat": 51.8, "lon": -106.0, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -106.0, 51.8 ] } },
+{ "type": "Feature", "properties": { "station_id": 11, "lat": 50.9, "lon": -104.8, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -104.8, 50.9 ] } },
+{ "type": "Feature", "properties": { "station_id": 12, "lat": 52.3, "lon": -106.3, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -106.3, 52.3 ] } },
+{ "type": "Feature", "properties": { "station_id": 13, "lat": 50.6, "lon": -105.3, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -105.3, 50.6 ] } },
+{ "type": "Feature", "properties": { "station_id": 14, "lat": 51.0, "lon": -105.7, "type": "existing" }, "geometry": { "type": "Point", "coordinates": [ -105.7, 51.0 ] } }
+]
+}

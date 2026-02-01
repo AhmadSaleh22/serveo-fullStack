@@ -1,0 +1,38 @@
+{
+  "type": "FeatureCollection",
+  "name": "optimized_stations",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 0,
+        "name": "Optimized Station 1 (Town_14)",
+        "chargers": 4,
+        "type": "optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -104.61890019070023,
+          58.84310085470413
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 1,
+        "name": "Optimized Station 2 (Town_3)",
+        "chargers": 4,
+        "type": "optimized"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.81473955133778,
+          56.7887983557565
+        ]
+      }
+    }
+  ]
+}

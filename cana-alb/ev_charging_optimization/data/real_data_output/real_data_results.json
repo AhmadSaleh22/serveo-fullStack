@@ -1,0 +1,51 @@
+{
+  "generated_at": "2026-02-01T05:44:57.523199",
+  "scenario": "Saskatchewan Real Data Optimization",
+  "data_source": "main22 repository (2021 Census + NRCan)",
+  "data": {
+    "population_centers": 20,
+    "total_population": 614165,
+    "existing_stations": 15
+  },
+  "baseline": {
+    "stations": 15,
+    "chargers": 60,
+    "coverage_percent": 96.9,
+    "max_distance_km": 650.0,
+    "avg_wait_minutes": 5120.8,
+    "utilization": 1.16,
+    "evs_served": 13218,
+    "evs_balked": 2
+  },
+  "optimized": {
+    "total_stations": 17,
+    "new_stations": 2,
+    "total_chargers": 68,
+    "coverage_percent": 100.0,
+    "max_distance_km": 131.0,
+    "avg_wait_minutes": 4995.0,
+    "utilization": 1.159,
+    "evs_served": 14991,
+    "evs_balked": 0,
+    "new_station_details": [
+      {
+        "name": "Optimized Station 1 (Town_14)",
+        "lat": 58.84310085470413,
+        "lng": -104.61890019070023,
+        "chargers": 4
+      },
+      {
+        "name": "Optimized Station 2 (Town_3)",
+        "lat": 56.7887983557565,
+        "lng": -109.81473955133778,
+        "chargers": 4
+      }
+    ]
+  },
+  "improvement": {
+    "coverage_increase_percent": 3.1,
+    "distance_reduction_km": 520.0,
+    "wait_time_reduction_percent": 2.5,
+    "balk_reduction": 2
+  }
+}
